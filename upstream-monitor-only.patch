@@ -1,0 +1,16 @@
+--- ESPHome-2026.6.5/hon_climate.cpp
++++ local/hon_climate.cpp
+@@ -1291,6 +1291,13 @@
+ }
+ 
+ bool HonClimate::prepare_pending_action() {
++  // Local PoC fix: MONITOR_ONLY must also block actions, including automatic
++  // power-off after a cleaning cycle. Upstream only gates SENDING_CONTROL.
++  if (this->control_method_ == HonControlMethod::MONITOR_ONLY) {
++    this->action_request_.reset();
++    return false;
++  }
++  if (!this->action_request_.has_value()) return false;
+   auto &action_request = this->action_request_.value();  // NOLINT(bugprone-unchecked-optional-access)
+   switch (action_request.action) {
+     case ActionRequest::START_SELF_CLEAN:

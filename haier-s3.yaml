@@ -1,0 +1,70 @@
+substitutions:
+  haier_tx: GPIO17
+  haier_rx: GPIO18
+  rs485_tx: GPIO15
+  rs485_rx: GPIO16
+  rs485_de: GPIO21
+esphome:
+  name: haier-s3
+  friendly_name: Haier ESP32-S3 Modbus
+  build_path: work/build
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: arduino
+psram:
+  mode: octal
+  speed: 80MHz
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [fourvrs_portal, haier]
+fourvrs_portal:
+  id: portal
+  climate_id: haier_ac
+  rs485_uart_id: rs485_uart
+  setup_password: !secret setup_password
+  ota_password: !secret ota_password
+logger:
+  level: DEBUG
+  hardware_uart: UART0
+  baud_rate: 115200
+uart:
+  - id: haier_uart
+    tx_pin: ${haier_tx}
+    rx_pin: ${haier_rx}
+    baud_rate: 9600
+    data_bits: 8
+    parity: NONE
+    stop_bits: 1
+    rx_buffer_size: 512
+  - id: rs485_uart
+    tx_pin: ${rs485_tx}
+    rx_pin: ${rs485_rx}
+    flow_control_pin: ${rs485_de}
+    baud_rate: 19200
+    data_bits: 8
+    parity: NONE
+    stop_bits: 1
+    rx_buffer_size: 512
+    rx_full_threshold: 1
+    rx_timeout: 2
+climate:
+  - platform: haier
+    id: haier_ac
+    name: Haier
+    uart_id: haier_uart
+    protocol: hon
+    wifi_signal: false
+    control_method: MONITOR_ONLY
+    status_message_header_size: 0
+    visual:
+      min_temperature: 16
+      max_temperature: 30
+      temperature_step: 1
+    on_status_message:
+      then:
+        - lambda: |-
+            id(portal).status_received(data, data_size);
