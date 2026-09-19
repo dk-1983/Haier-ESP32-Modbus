@@ -7,7 +7,7 @@
 namespace esphome { namespace fourvrs_portal {
 static const char *const TAG = "fourvrs_portal";
 static constexpr uint32_t RETRY_MS = 30000, FALLBACK_MS = 60000;
-static const char HOME_PAGE[] PROGMEM = R"HTML(<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Haier Modbus</title><style>body{font:18px system-ui;max-width:640px;margin:32px auto;padding:16px;background:#101827;color:#eff6ff}pre{white-space:pre-wrap}a{color:#6ac8ff}</style><h1>Haier · UART + Modbus</h1><p>Локальное управление кондиционером. <a href="/control">Открыть пульт</a> · <a href="/modbus">Modbus</a> · <a href="/mqtt">MQTT</a></p><p id="connection">Проверка связи…</p><pre id="state"></pre><p><a href="/health">Состояние ESP32-S3</a></p><script>async function refresh(){try{let r=await fetch('/haier/status',{cache:'no-store'});if(!r.ok)throw Error();let s=await r.json();document.getElementById('connection').textContent=s.available?'Получено свежее состояние Haier':'Нет свежего состояния Haier';document.getElementById('state').textContent=JSON.stringify(s,null,2)}catch(e){document.getElementById('connection').textContent='Нет связи с ESP32-S3';document.getElementById('state').textContent=''}}refresh();setInterval(refresh,2000);</script></html>)HTML";
+static const char HOME_PAGE[] PROGMEM = R"HTML(<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Haier Modbus</title><style>body{font:18px system-ui;max-width:640px;margin:32px auto;padding:16px;background:#101827;color:#eff6ff}pre{white-space:pre-wrap}a{color:#6ac8ff}</style><h1>Haier · UART + Modbus</h1><p>Локальное управление кондиционером. <a href="/control">Открыть пульт</a> · <a href="/modbus">Modbus</a> · <a href="/mqtt">MQTT</a> · <a href="/wifi/reset">Сброс Wi-Fi</a></p><p id="connection">Проверка связи…</p><pre id="state"></pre><p><a href="/health">Состояние ESP32-S3</a></p><script>async function refresh(){try{let r=await fetch('/haier/status',{cache:'no-store'});if(!r.ok)throw Error();let s=await r.json();document.getElementById('connection').textContent=s.available?'Получено свежее состояние Haier':'Нет свежего состояния Haier';document.getElementById('state').textContent=JSON.stringify(s,null,2)}catch(e){document.getElementById('connection').textContent='Нет связи с ESP32-S3';document.getElementById('state').textContent=''}}refresh();setInterval(refresh,2000);</script></html>)HTML";
 
 String Portal::json_string_(const String &value) {
   String result = "\"";
@@ -115,7 +115,7 @@ bool Portal::test_auth_() {
   web_.requestAuthentication(); return false;
 }
 void Portal::configure_web_() {
-  modbus_web_(); mqtt_web_();
+  modbus_web_(); mqtt_web_(); wifi_reset_web_();
   web_.on("/haier/extended", HTTP_POST, [this]() { extended_command_(); });
   web_.on("/diagnostics/wifi-drop", HTTP_POST, [this]() {
     if (!test_auth_()) return;
@@ -170,7 +170,7 @@ void Portal::configure_web_() {
   web_.on("/wifi", HTTP_POST, [this]() {
     if (!portal_request_()) return;
     if (web_.arg("token") != token_) { web_.send(403, "text/plain", "Reload setup page."); return; }
-    if (pending_ || scanning_) { web_.send(409, "text/plain", "Wait for scan/connection."); return; }
+    if (pending_ || scanning_ || wifi_reset_pending_) { web_.send(409, "text/plain", "Wait for scan/connection."); return; }
     String s = web_.arg("ssid"), p = web_.arg("password");
     if (s.length() == 0 || s.length() > 32 || p.length() > 63 || (p.length() && p.length() < 8) ||
         strlen(s.c_str()) != s.length() || strlen(p.c_str()) != p.length()) {
@@ -219,6 +219,7 @@ void Portal::loop() {
   mqtt_loop_(); web_.handleClient(); finish_scan_(); modbus_loop_();
   // HTTP handlers can start timers; sample time AFTER handling the request.
   uint32_t now = millis();
+  if(wifi_reset_pending_){wifi_reset_apply_();return;}
   if (wifi_drop_pending_ && uint32_t(now-wifi_drop_at_)>=500) {
     wifi_drop_pending_=false;
     // Fault injection only: normal production reconnect logic below recovers.

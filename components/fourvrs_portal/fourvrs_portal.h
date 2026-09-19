@@ -73,6 +73,8 @@ class Portal : public Component, public haier_bridge::Backend {
   void show_setup_();
   void finish_scan_();
   void configure_web_();
+  void wifi_reset_web_();void wifi_reset_apply_();
+  bool wifi_reset_pending_{false};uint32_t wifi_reset_at_{0};
   void configure_ota_();
   bool test_pending_{false}, control_window_{false};
   uint32_t test_started_{0}, test_frame_{0};
