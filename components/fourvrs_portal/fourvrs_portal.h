@@ -11,6 +11,7 @@
 #include "SetupPage.h"
 #include "ModbusPage.h"
 #include "modbus_core.h"
+#include "mqtt_client_state.h"
 
 namespace esphome { namespace fourvrs_portal {
 class Portal : public Component, public haier_bridge::Backend {
@@ -26,6 +27,11 @@ class Portal : public Component, public haier_bridge::Backend {
   void loop() override;
   void status_received(const char *data, size_t size);
  protected:
+  MqttConfig mqtt_config_{};MqttRuntime mqtt_runtime_{};ESPPreferenceObject mqtt_pref_;
+  uint32_t mqtt_last_publish_{0},mqtt_seen_connections_{0},mqtt_command_count_{0};
+  String mqtt_pending_id_;
+  void mqtt_setup_();void mqtt_web_();void mqtt_loop_();String mqtt_json_();
+  bool mqtt_publish_(const char *suffix,const String &body);
   struct ModbusConfig { uint32_t magic{0x484d4201}; uint32_t baud{19200}; uint8_t unit{1}, rtu{0}, tcp{0}, reserved{0}; };
   ModbusConfig modbus_config_{};
   ESPPreferenceObject modbus_pref_;

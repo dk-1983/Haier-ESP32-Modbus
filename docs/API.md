@@ -17,3 +17,5 @@
 HTTP202 означает приём, `command_state=confirmed` — два совпадающих ответа Haier. Общий арбитр не допускает одновременно несколько команд из веба/RTU/TCP. Последний HTTP request_id повторно не отправляет команду; перезапуск очищает эту защиту. Modbus не имеет HTTP request_id и долговременной дедупликации.
 
 OTA: ArduinoOTA UDP8266, пароль из локального secrets.yaml. Для ESP32 используйте espota.py из закреплённого Arduino-ESP32 framework: версия3.3.9 использует свой поддерживаемый механизм аутентификации. Образы ESP8266 несовместимы. Автоматический rollback без отдельной настройки и проверки не обещается.
+
+MQTT: GET `/mqtt` — настройки; GET `/mqtt/config` — конфигурация и диагностика без пароля; POST `/mqtt/config` — token, enabled, host, port, username, password, clear_password и prefix. Все маршруты требуют Basic-аутентификации. Поля и семантика описаны в MQTT.md.

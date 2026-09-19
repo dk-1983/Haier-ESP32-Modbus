@@ -1,12 +1,13 @@
 #include "fourvrs_portal.h"
 #include "HonSelfTest.h"
 #include "ControlPage.h"
+#include "version.h"
 #include <cmath>
 
 namespace esphome { namespace fourvrs_portal {
 static const char *const TAG = "fourvrs_portal";
 static constexpr uint32_t RETRY_MS = 30000, FALLBACK_MS = 60000;
-static const char HOME_PAGE[] PROGMEM = R"HTML(<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Haier Modbus</title><style>body{font:18px system-ui;max-width:640px;margin:32px auto;padding:16px;background:#101827;color:#eff6ff}pre{white-space:pre-wrap}a{color:#6ac8ff}</style><h1>Haier · UART + Modbus</h1><p>Локальное управление кондиционером. <a href="/control">Открыть пульт</a> · <a href="/modbus">Modbus</a></p><p id="connection">Проверка связи…</p><pre id="state"></pre><p><a href="/health">Состояние ESP32-S3</a></p><script>async function refresh(){try{let r=await fetch('/haier/status',{cache:'no-store'});if(!r.ok)throw Error();let s=await r.json();document.getElementById('connection').textContent=s.available?'Получено свежее состояние Haier':'Нет свежего состояния Haier';document.getElementById('state').textContent=JSON.stringify(s,null,2)}catch(e){document.getElementById('connection').textContent='Нет связи с ESP32-S3';document.getElementById('state').textContent=''}}refresh();setInterval(refresh,2000);</script></html>)HTML";
+static const char HOME_PAGE[] PROGMEM = R"HTML(<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Haier Modbus</title><style>body{font:18px system-ui;max-width:640px;margin:32px auto;padding:16px;background:#101827;color:#eff6ff}pre{white-space:pre-wrap}a{color:#6ac8ff}</style><h1>Haier · UART + Modbus</h1><p>Локальное управление кондиционером. <a href="/control">Открыть пульт</a> · <a href="/modbus">Modbus</a> · <a href="/mqtt">MQTT</a></p><p id="connection">Проверка связи…</p><pre id="state"></pre><p><a href="/health">Состояние ESP32-S3</a></p><script>async function refresh(){try{let r=await fetch('/haier/status',{cache:'no-store'});if(!r.ok)throw Error();let s=await r.json();document.getElementById('connection').textContent=s.available?'Получено свежее состояние Haier':'Нет свежего состояния Haier';document.getElementById('state').textContent=JSON.stringify(s,null,2)}catch(e){document.getElementById('connection').textContent='Нет связи с ESP32-S3';document.getElementById('state').textContent=''}}refresh();setInterval(refresh,2000);</script></html>)HTML";
 
 String Portal::json_string_(const String &value) {
   String result = "\"";
@@ -100,7 +101,7 @@ String Portal::climate_status_() {
   return out + "}";
 }
 String Portal::health_() {
-  return String("{\"version\":\"0.4.0-s3-modbus\",\"hostname\":") + json_string_(hostname_) +
+  return String("{\"version\":\"" HAIER_FIRMWARE_VERSION "\",\"hostname\":") + json_string_(hostname_) +
       ",\"mac\":" + json_string_(WiFi.macAddress()) + ",\"ip\":" + json_string_(WiFi.localIP().toString()) +
       ",\"wifi\":" + (WiFi.status() == WL_CONNECTED ? "true" : "false") +
       ",\"ap\":" + (radio_ap_() ? "true" : "false") + ",\"ota\":" + (ota_active_ ? "true" : "false") +
@@ -114,7 +115,7 @@ bool Portal::test_auth_() {
   web_.requestAuthentication(); return false;
 }
 void Portal::configure_web_() {
-  modbus_web_();
+  modbus_web_(); mqtt_web_();
   web_.on("/haier/extended", HTTP_POST, [this]() { extended_command_(); });
   web_.on("/diagnostics/wifi-drop", HTTP_POST, [this]() {
     if (!test_auth_()) return;
@@ -211,11 +212,11 @@ void Portal::setup() {
   WiFi.setAutoReconnect(false); WiFi.setSleep(false);
   WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info) { if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) disconnect_reason_ = info.wifi_sta_disconnected.reason; });
   if (!active_.ssid[0]) start_portal_(); else WiFi.begin(active_.ssid, active_.password);
-  modbus_setup_(); configure_ota_(); configure_web_(); outage_since_ = last_attempt_ = millis();
+  modbus_setup_(); mqtt_setup_(); configure_ota_(); configure_web_(); outage_since_ = last_attempt_ = millis();
   ESP_LOGI(TAG, "4VRS portal adapted for ESP32-S3; %s; setup complete", hostname_.c_str());
 }
 void Portal::loop() {
-  web_.handleClient(); finish_scan_(); modbus_loop_();
+  mqtt_loop_(); web_.handleClient(); finish_scan_(); modbus_loop_();
   // HTTP handlers can start timers; sample time AFTER handling the request.
   uint32_t now = millis();
   if (wifi_drop_pending_ && uint32_t(now-wifi_drop_at_)>=500) {

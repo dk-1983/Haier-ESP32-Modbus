@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "components/fourvrs_portal/register_model.h"
 #include "components/haier/bridge_control.h"
+#include "components/fourvrs_portal/mqtt_model.h"
 #include <cassert>
 #include <cstdio>
 #include <vector>
@@ -87,5 +88,33 @@ int main(){
   std::mt19937 gen(42);uint8_t input[270],guard[270];
   for(int trial=0;trial<50000;++trial){size_t n=gen()%270;for(size_t j=0;j<n;++j)input[j]=gen();std::memset(guard,0xA5,sizeof(guard));
     size_t got=pdu(b,input,n,guard);assert(got<=253);for(size_t j=253;j<sizeof(guard);++j)assert(guard[j]==0xA5);}
+  Change cmd{};
+  assert(!mqtt_command("target","22",cmd) && cmd.table==Table::HOLDING && cmd.address==0 && cmd.value==22);
+  for(const char *bad:{"", "0", "31", "22x", "22.0", " 22", "22\n"})assert(mqtt_command("target",bad,cmd)==3);
+  assert(!mqtt_command("power","ON",cmd) && cmd.table==Table::COIL && cmd.value==1);
+  assert(mqtt_command("power","on",cmd)==3 && mqtt_command("unknown","ON",cmd)==2);
+  assert(!mqtt_command("mode","HEAT",cmd) && cmd.address==1 && cmd.value==2);
+  assert(!mqtt_command("fan","AUTO",cmd) && cmd.value==4);
+  assert(!mqtt_command("lock","LOCK",cmd) && cmd.value==4);
+  assert(!mqtt_command("swing","BOTH",cmd) && cmd.value==3);
+  assert(!mqtt_command("preset","SLEEP",cmd) && cmd.value==2);
+  assert(!mqtt_command("vertical_position","DOWN",cmd) && cmd.value==8);
+  assert(!mqtt_command("horizontal_position","MAX_RIGHT",cmd) && cmd.value==6);
+  assert(!mqtt_command("quiet","OFF",cmd) && cmd.address==1 && cmd.value==0);
+  assert(!mqtt_command("display","ON",cmd) && cmd.address==2 && cmd.value==1);
+  assert(mqtt_prefix("haier/ac-1") && !mqtt_prefix("haier/#") && !mqtt_prefix("haier//ac") && !mqtt_prefix("/haier"));
+  assert(mqtt_host("mqtt.local") && mqtt_host("192.168.1.2") && !mqtt_host("mqtt://host") && !mqtt_host("host:1883"));
+  const char *topic="haier/set/target";
+  for(size_t split=0;split<2;++split){MqttAssembly a;
+    assert(!a.feed(topic,strlen(topic),"22",split,0,2,false));
+    assert(a.feed(nullptr,0,&"22"[split],2-split,split,2,false)==(split!=0));
+    // A repeated offset-zero fragment without its topic is invalid, never a command.
+  }
+  MqttAssembly a;assert(a.feed(topic,strlen(topic),"22",2,0,2,true) && a.message.retained);
+  assert(!a.feed(topic,strlen(topic),"2",1,0,200,false));
+  assert(!a.feed(topic,strlen(topic),"2",1,0,2,false));assert(!a.feed(nullptr,0,"2",1,2,2,false));
+  const char embedded_zero[]={'2',0};assert(!a.feed(topic,strlen(topic),embedded_zero,2,0,2,false));
+  assert(a.feed(topic,strlen(topic),"22",2,0,2,false) && !strcmp(a.message.payload,"22"));
+  std::puts("PASS: MQTT command mapping, validation, bounded fragmented messages and retained flag");
   std::puts("PASS: YCJ mapping, atomic writes, 7 function codes, exceptions, CRC/broadcast, TCP framing, 50000 malformed PDUs");
 }

@@ -28,6 +28,7 @@ async def to_code(config):
     cg.add_library("Network", None)
     cg.add_library("FS", None)
     cg.add_library("Update", None)
+    esp32.include_builtin_idf_component("mqtt")
     esp32.include_builtin_idf_component("esp_http_client")
     esp32.include_builtin_idf_component("esp_https_ota")
 
