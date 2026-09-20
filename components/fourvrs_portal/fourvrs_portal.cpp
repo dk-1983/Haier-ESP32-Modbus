@@ -1,5 +1,6 @@
 #include "fourvrs_portal.h"
 #include "HonSelfTest.h"
+#include "status_sensors.h"
 #include "ControlPage.h"
 #include "HomePage.h"
 #include "AboutPage.h"
@@ -64,8 +65,7 @@ void Portal::status_received(const char *data, size_t size) {
   // Accepted payload, with status_message_header_size fixed to zero in this project.
   raw_control_valid_ = size >= 2 + sizeof(raw_control_);
   if (raw_control_valid_) memcpy(&raw_control_, data + 2, sizeof(raw_control_));
-  raw_sensors_valid_ = size >= 12 + 22;
-  if(raw_sensors_valid_) { memset(&raw_sensors_,0,sizeof(raw_sensors_)); memcpy(&raw_sensors_,data+12,22); }
+  raw_sensors_valid_ = copy_status_sensors(raw_sensors_, data, size);
   seen_status_ = true; last_status_ = millis(); ++status_count_;
   last_payload_ = format_hex_pretty(reinterpret_cast<const uint8_t *>(data), size).c_str();
   if (test_pending_ && status_count_ > test_frame_) {

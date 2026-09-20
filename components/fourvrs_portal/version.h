@@ -1,3 +1,3 @@
 // SPDX-License-Identifier: MIT
 #pragma once
-#define HAIER_FIRMWARE_VERSION "0.6.0"
+#define HAIER_FIRMWARE_VERSION "0.6.7"
