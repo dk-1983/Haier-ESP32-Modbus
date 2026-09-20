@@ -5,12 +5,12 @@ esphome:
   build_path: work/gpio17-test
   project:
     name: local.haier_gpio17_test
-    version: 0.6.3-gpio17-test
+    version: 0.6.4-gpio17-pullup-test
   on_boot:
     priority: -100
     then:
       - output.turn_off: test_gpio17
-      - logger.log: "GPIO17 TEST: LOW; alternates every 5 seconds. Haier disconnected."
+      - logger.log: "GPIO17 PULLUP TEST: LOW; alternates every 5 seconds. Haier disconnected."
 esp32:
   board: esp32-s3-devkitc-1
   flash_size: 16MB
@@ -32,7 +32,7 @@ output:
       mode:
         output: true
         open_drain: false
-        pullup: false
+        pullup: true
         pulldown: false
 interval:
   - interval: 5s
