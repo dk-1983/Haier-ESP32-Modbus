@@ -1,0 +1,48 @@
+# Bench only: disconnect Haier, connect GPIO17 directly to GPIO18.
+esphome:
+  name: haier-s3
+  build_path: work/uart-loopback-test
+  project:
+    name: local.haier_uart_loopback
+    version: 0.6.6-uart-loopback-test
+  includes:
+    - uart_loopback_test.h
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: arduino
+psram:
+  mode: octal
+  speed: 80MHz
+logger:
+  level: DEBUG
+  hardware_uart: UART0
+  baud_rate: 115200
+uart:
+  - id: haier_uart
+    tx_pin: GPIO17
+    rx_pin: GPIO18
+    baud_rate: 9600
+    data_bits: 8
+    parity: NONE
+    stop_bits: 1
+    rx_buffer_size: 512
+  - id: rs485_uart
+    tx_pin: GPIO15
+    rx_pin: GPIO16
+    flow_control_pin: GPIO21
+    baud_rate: 19200
+    data_bits: 8
+    parity: NONE
+    stop_bits: 1
+    rx_buffer_size: 512
+    rx_full_threshold: 1
+    rx_timeout: 2
+interval:
+  - interval: 3s
+    startup_delay: 2s
+    then:
+      - lambda: haier_loopback_begin(id(haier_uart));
+      - delay: 200ms
+      - lambda: haier_loopback_finish(id(haier_uart));
