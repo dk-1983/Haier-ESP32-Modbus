@@ -43,3 +43,7 @@ GND Haier -------------- U2 pin3 (E)
 S3: TX GPIO17, RX GPIO18. ESP8266 текущего проекта: TX GPIO5(D1), RX GPIO4(D2).
 
 Источник: Sharp PC817XxNSZ1B, pinout/CTR/timing: https://global.sharp/products/device/lineup/data/pdf/datasheet/PC817XxNSZ1B_e.pdf
+
+## Стенд с Arduino вместо кондиционера
+
+Для проверки обоих каналов при 5/3,3 В с основной прошивкой ESP подготовлен [имитатор hOn на Nano ATmega328P](../bench/README.md). Nano D11 заменяет TX Haier, D10 — RX Haier. Это не сквозная петля оптопар: каждую LED-цепь питает самостоятельный выход микроконтроллера. Совместимый вариант оптопары — NEC PS2561-1 после сверки распиновки. Стенд ещё не проверен физически.
