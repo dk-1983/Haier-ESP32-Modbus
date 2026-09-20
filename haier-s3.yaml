@@ -33,7 +33,9 @@ logger:
   baud_rate: 115200
 uart:
   - id: haier_uart
-    tx_pin: ${haier_tx}
+    tx_pin:
+      number: ${haier_tx}
+      inverted: true
     rx_pin: ${haier_rx}
     baud_rate: 9600
     data_bits: 8
