@@ -10,6 +10,8 @@ hon_bench::Appliance appliance;
 hon_bench::Message request, response;
 uint32_t sent = 0, overflowCount = 0, lastReport = 0, ledUntil = 0;
 bool muteReplies = false, corruptNext = false;
+uint8_t raw[96], rawCount = 0;
+uint32_t lastByte = 0;
 
 // Optional checksum fault, exercised only by explicit USB command 'c'.
 struct WireOutput {
@@ -41,7 +43,7 @@ void report() {
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   Serial.begin(115200); haier.begin(9600);
-  Serial.println(F("Haier bench simulator 0.1.0; NOT a real AC"));
+  Serial.println(F("Haier bench simulator 0.1.1; NOT a real AC"));
   Serial.println(F("UART RX=D10 TX=D11 9600 8N1; USB=115200"));
   Serial.println(F("USB: s=status, m=mute replies, r=resume, c=corrupt next reply"));
 }
@@ -49,7 +51,10 @@ void loop() {
   parser.expire(millis());
   if (haier.overflow()) ++overflowCount;
   while (haier.available()) {
-    if (!parser.feed(uint8_t(haier.read()), millis(), request)) continue;
+    const uint8_t b = uint8_t(haier.read());
+    if (rawCount < sizeof(raw)) raw[rawCount++] = b;
+    lastByte = millis();
+    if (!parser.feed(b, lastByte, request)) continue;
     digitalWrite(LED_BUILTIN, HIGH); ledUntil = millis() + 80;
     if (appliance.reply(request, response) && !muteReplies) {
       delay(15); // bench appliance turnaround, well below ESP answer timeout
@@ -59,6 +64,14 @@ void loop() {
     Serial.print(F("RX type=0x")); Serial.print(request.type, HEX);
     Serial.print(F(" size=")); Serial.print(request.size);
     Serial.print(F(" crc=")); Serial.println(request.crc);
+  }
+  if (rawCount && uint32_t(millis() - lastByte) > 30) {
+    Serial.print(F("WIRE RX: "));
+    for (uint8_t i = 0; i < rawCount; ++i) {
+      if (raw[i] < 16) Serial.print('0');
+      Serial.print(raw[i], HEX); Serial.print(' ');
+    }
+    Serial.println(); rawCount = 0;
   }
   if (ledUntil && int32_t(millis() - ledUntil) >= 0) {
     digitalWrite(LED_BUILTIN, LOW); ledUntil = 0;
