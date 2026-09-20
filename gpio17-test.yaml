@@ -1,16 +1,17 @@
-# Diagnostic only. Disconnect GPIO17 from the air conditioner before flashing.
+# Diagnostic only. Disconnect BOTH GPIO17 and GPIO18 from the air conditioner.
 # No Haier UART, Modbus, Wi-Fi or MQTT. Restore normal firmware after measurement.
 esphome:
   name: haier-s3
   build_path: work/gpio17-test
   project:
     name: local.haier_gpio17_test
-    version: 0.6.4-gpio17-pullup-test
+    version: 0.6.5-gpio-sequence-test
+  includes:
+    - gpio_sequence_test.h
   on_boot:
     priority: -100
     then:
-      - output.turn_off: test_gpio17
-      - logger.log: "GPIO17 PULLUP TEST: LOW; alternates every 5 seconds. Haier disconnected."
+      - lambda: haier_gpio_test_step(0);
 esp32:
   board: esp32-s3-devkitc-1
   flash_size: 16MB
@@ -23,23 +24,10 @@ logger:
   level: DEBUG
   hardware_uart: UART0
   baud_rate: 115200
-output:
-  - platform: gpio
-    id: test_gpio17
-    pin:
-      number: GPIO17
-      inverted: false
-      mode:
-        output: true
-        open_drain: false
-        pullup: true
-        pulldown: false
 interval:
   - interval: 5s
     then:
       - lambda: |-
-          static bool high = false;
-          high = !high;
-          if (high) id(test_gpio17).turn_on();
-          else id(test_gpio17).turn_off();
-          ESP_LOGI("gpio17_test", "GPIO17 commanded %s", high ? "HIGH (3.3 V)" : "LOW (0 V)");
+          static unsigned step = 0;
+          step = (step + 1) % 4;
+          haier_gpio_test_step(step);
