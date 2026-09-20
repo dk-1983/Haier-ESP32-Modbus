@@ -55,7 +55,7 @@ void Portal::extended_command_() {
   modbus_pending_=false;
   desired_mode_=desired_fan_=desired_swing_=desired_preset_="";desired_target_set_=false;
   desired_quiet_=desired_display_=desired_vertical_=desired_horizontal_=-1;
-  request_id_=rid;test_pending_=true;control_window_=true;test_started_=millis();test_frame_=status_count_;test_matches_=0;test_state_="pending";
+  request_id_=rid;mqtt_state_changed_(true);test_pending_=true;control_window_=true;test_started_=millis();test_frame_=status_count_;test_matches_=0;test_state_="pending";
   hon_()->set_control_method(haier::HonControlMethod::SET_GROUP_PARAMETERS);
   if(field=="quiet"){desired_quiet_=selected;hon_()->set_quiet_mode_state(selected);}
   if(field=="display"){desired_display_=selected;climate_->set_display_state(selected);}

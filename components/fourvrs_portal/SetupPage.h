@@ -1,7 +1,7 @@
 #pragma once
-static const char SETUP_PAGE[] PROGMEM = R"HTML(<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Haier PoC — Wi-Fi</title><style>body{font:18px system-ui;max-width:540px;margin:32px auto;padding:16px;background:#101827;color:#eff6ff}input,select,button{font:inherit;box-sizing:border-box;width:100%;padding:12px;margin:6px 0 16px;border-radius:8px}button{background:#6ac8ff;border:0;cursor:pointer}a{color:#6ac8ff}small{color:#bbcadb}#status{white-space:pre-wrap}</style>
-<h1>Haier PoC · Wi-Fi</h1><small>Выберите сеть 2,4 ГГц. Для скрытой сети введите имя вручную.</small>
+static const char SETUP_PAGE[] PROGMEM = R"HTML(<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Haier PoC — Wi-Fi</title>__STYLE__
+</head><body data-page="wifi">__NAV__<main><h1>Haier PoC · Wi-Fi</h1><small>Выберите сеть 2,4 ГГц. Для скрытой сети введите имя вручную.</small>
 <button id="scan" type="button">Найти сети</button><div id="scanStatus" role="status"></div><select id="networks" aria-label="Найденные сети"><option value="">Выберите сеть</option></select>
 <form id="form"><label>Имя сети (SSID)<input id="ssid" name="ssid" maxlength="32" required></label><label>Пароль сети<input name="password" type="password" maxlength="63" autocomplete="new-password"></label><button id="connect">Подключить</button></form>
 <p id="status" role="status">Чтение состояния…</p><a id="address" hidden></a>
@@ -17,4 +17,4 @@ for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,500));r=await fetch('/sc
 }catch(e){$('scanStatus').textContent=e.message;}finally{b.disabled=false;}};
 $('form').onsubmit=async e=>{e.preventDefault();$('connect').disabled=true;try{let data=new URLSearchParams(new FormData(e.target));data.set('token',token);let r=await fetch('/wifi',{method:'POST',body:data});if(!r.ok)throw Error(await r.text());submitted=true;$('status').textContent='Сеть сохранена. Подключаемся…';}catch(e){$('status').textContent=e.message;}finally{$('connect').disabled=false;}};
 state();setInterval(state,2000);
-</script></html>)HTML";
+</script></main></body></html>)HTML";

@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 #include "mqtt_client_state.h"
+#include <Arduino.h>
+#include "Discovery.h"
+#include "version.h"
 #include <WiFi.h>
 #include <cstdio>
 namespace esphome::fourvrs_portal {
@@ -8,14 +11,19 @@ static void mqtt_event(void *arg,esp_event_base_t,int32_t id,void *data) {
   if(id==MQTT_EVENT_CONNECTED){
     r.assembly.clear();r.last_error=0;
     if(esp_mqtt_client_subscribe_single(e->client,r.subscription,0)<0){r.last_error=-2;return;}
-    r.connected=true;++r.connections;
+    if(esp_mqtt_client_subscribe_single(e->client,"homeassistant/status",0)<0){r.last_error=-2;return;}
+    r.connected=true;++r.connections;++r.discovery_request;r.discovery_acked=0;
     esp_mqtt_client_enqueue(e->client,r.availability,"online",0,1,1,true);
-  } else if(id==MQTT_EVENT_DISCONNECTED){r.connected=false;r.assembly.clear();}
+  } else if(id==MQTT_EVENT_DISCONNECTED){r.connected=false;r.assembly.clear();xQueueReset(r.tx_queue);xQueueReset(r.rx_queue);}
   else if(id==MQTT_EVENT_ERROR){r.last_error=e->error_handle?int(e->error_handle->error_type):-1;}
   else if(id==MQTT_EVENT_PUBLISHED){r.last_ack=e->msg_id;}
   else if(id==MQTT_EVENT_DATA){
     if(e->dup || e->data_len<0 || e->topic_len<0 || e->current_data_offset<0 || e->total_data_len<0){r.assembly.clear();++r.dropped;return;}
     if(r.assembly.feed(e->topic,e->topic_len,e->data,e->data_len,e->current_data_offset,e->total_data_len,e->retain)){
+      if(!strcmp(r.assembly.message.topic,"homeassistant/status")){
+        if(!e->retain && !strcmp(r.assembly.message.payload,"online"))++r.discovery_request;
+        return;
+      }
       r.assembly.message.received_ms=millis();
       if(xQueueSend(r.rx_queue,&r.assembly.message,0)!=pdTRUE)++r.dropped;
     }
@@ -35,11 +43,13 @@ static void stop_client(MqttRuntime &r) {
 }
 void mqtt_worker_task(void *arg) {
   auto &r=*static_cast<MqttRuntime *>(arg);uint32_t retry_at=0;
+  uint32_t discovery_seen=0,discovery_at=0,connection_seen=0;
+  unsigned discovery_step=5;int discovery_id=-1;
   for(;;){
     MqttConfig next;
-    if(xQueueReceive(r.config_queue,&next,pdMS_TO_TICKS(20))==pdTRUE){stop_client(r);r.active=next;retry_at=0;r.applying=false;}
+    if(xQueueReceive(r.config_queue,&next,pdMS_TO_TICKS(20))==pdTRUE){stop_client(r);discovery_id=-1;discovery_step=5;r.active=next;retry_at=0;r.applying=false;}
     bool should_run=r.active.enabled && WiFi.status()==WL_CONNECTED;
-    if(!should_run){stop_client(r);continue;}
+    if(!should_run){stop_client(r);discovery_id=-1;discovery_step=5;continue;}
     if(!r.client){
       if(retry_at && uint32_t(millis()-retry_at)<5000)continue;
       retry_at=millis();
@@ -60,9 +70,36 @@ void mqtt_worker_task(void *arg) {
         esp_mqtt_client_destroy(r.client);r.client=nullptr;r.last_error=-4;continue;
       }
     }
+    // One QoS1 retained Discovery packet at a time, advanced by broker PUBACK.
+    if(r.connected && connection_seen!=r.connections.load()){
+      connection_seen=r.connections.load();discovery_id=-1;discovery_seen=0;
+    }
+    if(discovery_id>=0){
+      if(r.last_ack.load()==discovery_id){discovery_id=-1;r.discovery_acked=++discovery_step;}
+      else if(uint32_t(millis()-discovery_at)>10000){
+        r.last_error=-7;stop_client(r);discovery_id=-1;retry_at=millis();continue;
+      }
+    }
+    if(r.connected && discovery_id<0 && discovery_seen!=r.discovery_request.load()){
+      discovery_seen=r.discovery_request.load();discovery_step=0;r.discovery_acked=0;
+    }
+    if(r.connected && !r.active.discovery_disabled && discovery_id<0 && discovery_step<5){
+      const char *templates[]={DISCOVERY_0,DISCOVERY_1,DISCOVERY_2,DISCOVERY_3,DISCOVERY_4};
+      const char *kinds[]={"climate","switch","switch","select","select"};
+      const char *entities[]={"climate","quiet","display","vertical_position","horizontal_position"};
+      String body=FPSTR(templates[discovery_step]);
+      body.replace("@BASE@",r.active.prefix);body.replace("@ID@",r.client_id);
+      body.replace("@IP@",WiFi.localIP().toString());body.replace("@VERSION@",HAIER_FIRMWARE_VERSION);
+      char topic[128];snprintf(topic,sizeof(topic),"homeassistant/%s/%s/%s/config",kinds[discovery_step],r.client_id,entities[discovery_step]);
+      r.last_ack=-1;
+      discovery_id=esp_mqtt_client_enqueue(r.client,topic,body.c_str(),body.length(),1,1,true);
+      discovery_at=millis();
+      if(discovery_id<0)r.last_error=-8;
+    }
     MqttPublish publish;
     // Bound per-iteration work and never queue stale telemetry while disconnected.
     for(unsigned i=0;i<4 && xQueueReceive(r.tx_queue,&publish,0)==pdTRUE;++i){
+      if(publish.state && (r.state_pending.load() || publish.epoch!=r.state_epoch.load()))continue;
       if(r.connected && esp_mqtt_client_enqueue(r.client,publish.topic,publish.payload,0,0,0,true)<0)++r.dropped;
     }
   }

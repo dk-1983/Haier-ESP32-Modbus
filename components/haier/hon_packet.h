@@ -197,7 +197,7 @@ enum class SubcommandsControl : uint16_t {
                                   // content: all values like in status packet)
 };
 
-const std::string HON_ALARM_MESSAGES[] = {
+inline constexpr const char *HON_ALARM_MESSAGES[] = {
     "Outdoor module failure",
     "Outdoor defrost sensor failure",
     "Outdoor compressor exhaust sensor failure",

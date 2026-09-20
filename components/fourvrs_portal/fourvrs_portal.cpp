@@ -1,13 +1,16 @@
 #include "fourvrs_portal.h"
 #include "HonSelfTest.h"
 #include "ControlPage.h"
+#include "HomePage.h"
+#include "AboutPage.h"
+#include "WifiInfoPage.h"
+#include <esp_heap_caps.h>
 #include "version.h"
 #include <cmath>
 
 namespace esphome { namespace fourvrs_portal {
 static const char *const TAG = "fourvrs_portal";
 static constexpr uint32_t RETRY_MS = 30000, FALLBACK_MS = 60000;
-static const char HOME_PAGE[] PROGMEM = R"HTML(<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Haier Modbus</title><style>body{font:18px system-ui;max-width:640px;margin:32px auto;padding:16px;background:#101827;color:#eff6ff}pre{white-space:pre-wrap}a{color:#6ac8ff}</style><h1>Haier · UART + Modbus</h1><p>Локальное управление кондиционером. <a href="/control">Открыть пульт</a> · <a href="/modbus">Modbus</a> · <a href="/mqtt">MQTT</a> · <a href="/wifi/reset">Сброс Wi-Fi</a></p><p id="connection">Проверка связи…</p><pre id="state"></pre><p><a href="/health">Состояние ESP32-S3</a></p><script>async function refresh(){try{let r=await fetch('/haier/status',{cache:'no-store'});if(!r.ok)throw Error();let s=await r.json();document.getElementById('connection').textContent=s.available?'Получено свежее состояние Haier':'Нет свежего состояния Haier';document.getElementById('state').textContent=JSON.stringify(s,null,2)}catch(e){document.getElementById('connection').textContent='Нет связи с ESP32-S3';document.getElementById('state').textContent=''}}refresh();setInterval(refresh,2000);</script></html>)HTML";
 
 String Portal::json_string_(const String &value) {
   String result = "\"";
@@ -43,8 +46,7 @@ void Portal::start_portal_() {
 void Portal::show_setup_() {
   if (!portal_request_()) return;
   web_.sendHeader("Cache-Control", "no-store");
-  String page = FPSTR(SETUP_PAGE); page.replace("__TOKEN__", token_);
-  web_.send(200, "text/html; charset=utf-8", page);
+  send_page_(SETUP_PAGE);
 }
 void Portal::finish_scan_() {
   if (!scanning_) return;
@@ -70,14 +72,14 @@ void Portal::status_received(const char *data, size_t size) {
     if (command_matches_()) {
       hon_()->set_control_method(haier::HonControlMethod::MONITOR_ONLY);
       control_window_ = false;
-      if (++test_matches_ >= 2) { test_pending_ = false; test_state_ = "confirmed"; }
+      if (++test_matches_ >= 2) { test_pending_ = false; test_state_ = "confirmed"; mqtt_state_changed_(false); }
     } else { test_matches_ = 0; }
   }
   ESP_LOGI(TAG, "Accepted hOn status #%lu, bytes=%u", (unsigned long)status_count_, unsigned(size));
   // Keep original payload for comparison with the unmodified hOn decoder.
   ESP_LOGD(TAG, "hOn status: %s", format_hex_pretty(reinterpret_cast<const uint8_t *>(data), size).c_str());
 }
-String Portal::climate_status_() {
+String Portal::climate_status_(bool raw) {
   bool fresh = seen_status_ && climate_->valid_connection() && uint32_t(millis() - last_status_) < 30000;
   String out = String("{\"available\":") + (fresh ? "true" : "false") +
       ",\"status_frames\":" + String(status_count_) + ",\"age_ms\":" +
@@ -97,15 +99,20 @@ String Portal::climate_status_() {
   out += ",\"display\":" + (extras ? String(raw_control_.display_status ? "true" : "false") : String("null"));
   out += ",\"vertical_position\":" + (extras ? json_string_(position_name_(raw_control_.vertical_swing_mode,true)) : String("null"));
   out += ",\"horizontal_position\":" + (extras ? json_string_(position_name_(raw_control_.horizontal_swing_mode,false)) : String("null"));
-  out += ",\"last_status_hex\":" + json_string_(last_payload_);
+  if(raw) out += ",\"last_status_hex\":" + json_string_(last_payload_);
   return out + "}";
 }
 String Portal::health_() {
+  uint32_t heap=ESP.getFreeHeap(),block=ESP.getMaxAllocHeap();
   return String("{\"version\":\"" HAIER_FIRMWARE_VERSION "\",\"hostname\":") + json_string_(hostname_) +
       ",\"mac\":" + json_string_(WiFi.macAddress()) + ",\"ip\":" + json_string_(WiFi.localIP().toString()) +
       ",\"wifi\":" + (WiFi.status() == WL_CONNECTED ? "true" : "false") +
       ",\"ap\":" + (radio_ap_() ? "true" : "false") + ",\"ota\":" + (ota_active_ ? "true" : "false") +
-      ",\"storage_ok\":" + (storage_ok_ ? "true" : "false") + ",\"free_heap\":" + String(ESP.getFreeHeap()) +
+      ",\"storage_ok\":" + (storage_ok_ ? "true" : "false") + ",\"free_heap\":" + String(heap) +
+      ",\"min_heap\":" + String(ESP.getMinFreeHeap()) + ",\"max_block\":" + String(block) +
+      ",\"fragmentation\":" + String(heap && block<heap?100-(100ULL*block/heap):0) +
+      ",\"psram_size\":" + String(ESP.getPsramSize()) + ",\"free_psram\":" + String(ESP.getFreePsram()) +
+      ",\"flash_size\":" + String(ESP.getFlashChipSize()) +
       ",\"wifi_outages\":" + String(wifi_outages_) + ",\"reconnect_attempts\":" + String(reconnect_attempts_) +
       ",\"disconnect_reason\":" + String(disconnect_reason_) +
       ",\"uptime_s\":" + String(millis() / 1000) + ",\"sketch_md5\":" + json_string_(ESP.getSketchMD5()) + "}";
@@ -128,9 +135,7 @@ void Portal::configure_web_() {
   });
   web_.on("/control", HTTP_GET, [this]() {
     if (!test_auth_()) return;
-    String page = FPSTR(CONTROL_PAGE); page.replace("__TOKEN__", token_);
-    web_.sendHeader("Cache-Control", "no-store");
-    web_.send(200, "text/html; charset=utf-8", page);
+    send_page_(CONTROL_PAGE);
   });
   web_.on("/haier/test-token", HTTP_GET, [this]() {
     if (!test_auth_()) return;
@@ -140,9 +145,13 @@ void Portal::configure_web_() {
   web_.on("/haier/control", HTTP_POST, [this]() { test_command_(); });
   web_.on("/", HTTP_GET, [this]() {
     if (radio_ap_() && web_.client().localIP() == WiFi.softAPIP()) { show_setup_(); return; }
-    web_.send_P(200, "text/html; charset=utf-8", HOME_PAGE);
+    send_page_(HOMEPAGE);
   });
-  web_.on("/wifi", HTTP_GET, [this]() { show_setup_(); });
+  web_.on("/wifi", HTTP_GET, [this]() {
+    if (radio_ap_() && web_.client().localIP() == WiFi.softAPIP()) { show_setup_(); return; }
+    if(test_auth_())send_page_(WIFIINFOPAGE);
+  });
+  web_.on("/about", HTTP_GET, [this]() { if(test_auth_())send_page_(ABOUTPAGE); });
   web_.on("/network", HTTP_GET, [this]() {
     if (!portal_request_()) return;
     web_.sendHeader("Cache-Control", "no-store");
@@ -230,7 +239,7 @@ void Portal::loop() {
       control_window_ = false;
     hon_()->clear_bridge_overrides();
     climate_->reset_protocol();
-    test_pending_ = false; test_state_ = "timeout_unconfirmed";
+    test_pending_ = false; test_state_ = "timeout_unconfirmed"; mqtt_state_changed_(false);
   }
   if (pending_ && uint32_t(now - pending_at_) >= 300) {
     pending_ = false; WiFi.disconnect(false, false); connected_before_ = false;

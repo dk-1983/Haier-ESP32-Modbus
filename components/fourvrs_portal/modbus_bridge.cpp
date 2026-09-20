@@ -51,7 +51,7 @@ uint8_t Portal::write(const Change *changes,size_t count) {
   modbus_expected_=next;modbus_mask_=mask;modbus_pending_=true;
   desired_mode_=desired_fan_=desired_swing_=desired_preset_="";desired_target_set_=false;
   desired_quiet_=desired_display_=desired_vertical_=desired_horizontal_=-1;
-  request_id_=String("mb-")+String(++modbus_commands_);test_pending_=true;test_frame_=status_count_;test_matches_=0;
+  request_id_=String("mb-")+String(++modbus_commands_);mqtt_state_changed_(true);test_pending_=true;test_frame_=status_count_;test_matches_=0;
   test_started_=millis();test_state_="pending";control_window_=true;
   hon_()->set_control_method(haier::HonControlMethod::SET_GROUP_PARAMETERS);
   // Existing hOn group encoder preserves bytes not changed by these native setters.
@@ -88,8 +88,7 @@ String Portal::modbus_json_(){
     ",\"unit\":"+String(modbus_config_.unit)+",\"baud\":"+String(modbus_config_.baud)+",\"tcp_port\":502}";
 }
 void Portal::modbus_web_(){
-  web_.on("/modbus",HTTP_GET,[this](){if(!test_auth_())return;
-    String page=FPSTR(MODBUS_PAGE);page.replace("__TOKEN__",token_);web_.sendHeader("Cache-Control","no-store");web_.send(200,"text/html; charset=utf-8",page);});
+  web_.on("/modbus",HTTP_GET,[this](){if(test_auth_())send_page_(MODBUS_PAGE);});
   web_.on("/modbus/config",HTTP_GET,[this](){if(!test_auth_())return;web_.sendHeader("Cache-Control","no-store");web_.send(200,"application/json",modbus_json_());});
   web_.on("/modbus/config",HTTP_POST,[this](){
     if(!test_auth_())return;if(web_.arg("token")!=token_){web_.send(403,"text/plain","Invalid token");return;}

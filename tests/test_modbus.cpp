@@ -104,6 +104,19 @@ int main(){
   assert(!mqtt_command("display","ON",cmd) && cmd.address==2 && cmd.value==1);
   assert(mqtt_prefix("haier/ac-1") && !mqtt_prefix("haier/#") && !mqtt_prefix("haier//ac") && !mqtt_prefix("/haier"));
   assert(mqtt_host("mqtt.local") && mqtt_host("192.168.1.2") && !mqtt_host("mqtt://host") && !mqtt_host("host:1883"));
+  Change ha[3];size_t ha_count;
+  initial.ac_power=0;initial.ac_mode=1;initial.fan_mode=3;initial.fast_mode=0;
+  for(const char *mode:{"COOL","HEAT","DRY","FAN_ONLY","AUTO"}){
+    assert(!mqtt_changes("hvac_mode",mode,ha,ha_count) && ha_count==(!strcmp(mode,"FAN_ONLY")?3:2));
+    assert(!plan(ha,ha_count,initial,p) && p.next.ac_power);
+    Change legacy;assert(!mqtt_command("mode",mode,legacy));
+    Plan old;assert(!plan(&legacy,1,initial,old) && !old.next.ac_power);
+    assert(p.next.ac_mode==old.next.ac_mode);
+  }
+  initial.fan_mode=5;assert(!mqtt_changes("hvac_mode","FAN_ONLY",ha,ha_count));assert(!plan(ha,ha_count,initial,p) && p.next.fan_mode==3);
+  assert(!mqtt_changes("hvac_mode","OFF",ha,ha_count) && ha_count==1);
+  initial.ac_power=1;assert(!plan(ha,ha_count,initial,p) && !p.next.ac_power);
+  for(const char *bad:{"off","HEAT_COOL","ON","INVALID"})assert(mqtt_changes("hvac_mode",bad,ha,ha_count)==3);
   const char *topic="haier/set/target";
   for(size_t split=0;split<2;++split){MqttAssembly a;
     assert(!a.feed(topic,strlen(topic),"22",split,0,2,false));

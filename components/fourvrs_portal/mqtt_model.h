@@ -48,6 +48,16 @@ inline uint8_t mqtt_command(const char *field,const char *value,Change &out) {
   else return 2;
   if(v<0)return 3;out={table,address,uint16_t(v)};return 0;
 }
+// HA HVAC combines mode and power. Register-style mode retains its semantics.
+inline uint8_t mqtt_changes(const char *field,const char *value,Change (&out)[3],size_t &count) {
+  count=1;
+  if(std::strcmp(field,"hvac_mode"))return mqtt_command(field,value,out[0]);
+  if(!std::strcmp(value,"OFF")){out[0]={Table::COIL,0,0};return 0;}
+  uint8_t error=mqtt_command("mode",value,out[0]);if(error)return error;
+  out[1]={Table::COIL,0,1};count=2;
+  if(!std::strcmp(value,"FAN_ONLY")){out[2]={Table::HOLDING,2,1};count=3;}
+  return 0;
+}
 struct MqttMessage {char topic[128]{};char payload[96]{};bool retained{false};uint32_t received_ms{0};};
 struct MqttAssembly {
   MqttMessage message{};size_t used{0},expected{0};bool active{false};

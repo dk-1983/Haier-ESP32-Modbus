@@ -26,10 +26,28 @@ void Portal::test_command_() {
   if (rid == request_id_) { web_.send(200,"application/json",climate_status_()); return; }
   if (test_pending_) { web_.send(409,"text/plain","Command pending; read status"); return; }
   for (unsigned i=0;i<web_.args();++i)
-    if (!allowed(web_.argName(i),{"token","request_id","target","mode","fan","swing","preset"})) {
+    if (!allowed(web_.argName(i),{"token","request_id","target","mode","fan","swing","preset","power"})) {
       web_.send(400,"text/plain","Unknown field"); return;
     }
   String mode=web_.arg("mode"),fan=web_.arg("fan"),swing=web_.arg("swing"),preset=web_.arg("preset");
+  if (web_.hasArg("power")) {
+    String power=web_.arg("power");
+    if (!allowed(power,{"ON","OFF"}) || web_.hasArg("mode") || web_.hasArg("target") ||
+        web_.hasArg("fan") || web_.hasArg("swing") || web_.hasArg("preset")) {
+      web_.send(400,"text/plain","Power must be ON/OFF without other settings"); return;
+    }
+    mode="OFF";
+    if (power=="ON") {
+      if (!raw_control_valid_) { web_.send(409,"text/plain","No Haier power state"); return; }
+      // Haier retains the operating mode in the status packet while powered off.
+      switch(raw_control_.ac_mode) {
+        case 0:mode="HEAT_COOL";break; case 1:mode="COOL";break;
+        case 2:mode="DRY";break; case 4:mode="HEAT";break;
+        case 6:mode="FAN_ONLY";break;
+        default:web_.send(409,"text/plain","Unknown Haier operating mode");return;
+      }
+    }
+  }
   bool has_target=web_.hasArg("target"); float target=NAN;
   if (has_target) {
     String raw=web_.arg("target");char *end=nullptr; target=strtof(raw.c_str(),&end);
@@ -54,7 +72,7 @@ void Portal::test_command_() {
   desired_quiet_=desired_display_=desired_vertical_=desired_horizontal_=-1;
   desired_mode_=mode;desired_fan_=fan;desired_swing_=swing;desired_preset_=preset;
   desired_target_set_=has_target;desired_target_=target;request_id_=rid;
-  test_pending_=true;control_window_=true;test_started_=millis();test_frame_=status_count_;
+  mqtt_state_changed_(true);test_pending_=true;control_window_=true;test_started_=millis();test_frame_=status_count_;
   test_state_="pending";test_matches_=0;
   hon_()->set_control_method(haier::HonControlMethod::SET_GROUP_PARAMETERS);
   auto call=climate_->make_call();

@@ -690,7 +690,7 @@ void HonClimate::process_alarm_message_(const uint8_t *packet, uint8_t size, boo
               bool alarm_status = (packet[2 + i] & alarm_bit) != 0;
               int log_level = alarm_status ? ESPHOME_LOG_LEVEL_WARN : ESPHOME_LOG_LEVEL_INFO;
               const char *alarm_message = alarm_code < esphome::haier::hon_protocol::HON_ALARM_COUNT
-                                              ? esphome::haier::hon_protocol::HON_ALARM_MESSAGES[alarm_code].c_str()
+                                              ? esphome::haier::hon_protocol::HON_ALARM_MESSAGES[alarm_code]
                                               : "Unknown";
               esp_log_printf_(log_level, TAG, __LINE__, "Alarm %s (%d): %s", alarm_status ? "activated" : "deactivated",
                               alarm_code, alarm_message);

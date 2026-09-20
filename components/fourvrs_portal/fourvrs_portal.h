@@ -30,6 +30,7 @@ class Portal : public Component, public haier_bridge::Backend {
   MqttConfig mqtt_config_{};MqttRuntime mqtt_runtime_{};ESPPreferenceObject mqtt_pref_;
   uint32_t mqtt_last_publish_{0},mqtt_seen_connections_{0},mqtt_command_count_{0};
   String mqtt_pending_id_;
+  void mqtt_state_changed_(bool pending);
   void mqtt_setup_();void mqtt_web_();void mqtt_loop_();String mqtt_json_();
   bool mqtt_publish_(const char *suffix,const String &body);
   struct ModbusConfig { uint32_t magic{0x484d4201}; uint32_t baud{19200}; uint8_t unit{1}, rtu{0}, tcp{0}, reserved{0}; };
@@ -72,7 +73,7 @@ class Portal : public Component, public haier_bridge::Backend {
   void start_portal_();
   void show_setup_();
   void finish_scan_();
-  void configure_web_();
+  void configure_web_();void send_page_(const char *page);
   void wifi_reset_web_();void wifi_reset_apply_();
   bool wifi_reset_pending_{false};uint32_t wifi_reset_at_{0};
   void configure_ota_();
@@ -97,6 +98,6 @@ class Portal : public Component, public haier_bridge::Backend {
   String preset_() const { return climate_->preset.has_value() ? log_string_(climate::climate_preset_to_string(*climate_->preset)) : String("NONE"); }
   String swing_() const { return log_string_(climate::climate_swing_mode_to_string(climate_->swing_mode)); }
   String health_();
-  String climate_status_();
+  String climate_status_(bool raw=true);
 };
 }}  // namespace esphome::fourvrs_portal

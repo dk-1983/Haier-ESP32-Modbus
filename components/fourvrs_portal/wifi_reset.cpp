@@ -5,8 +5,7 @@ namespace esphome::fourvrs_portal {
 void Portal::wifi_reset_web_() {
   web_.on("/wifi/reset",HTTP_GET,[this](){
     if(!test_auth_())return;
-    String page=FPSTR(WIFI_RESET_PAGE);page.replace("__TOKEN__",token_);page.replace("__SSID__",hostname_+"-setup");
-    web_.sendHeader("Cache-Control","no-store");web_.send(200,"text/html; charset=utf-8",page);
+    send_page_(WIFI_RESET_PAGE);
   });
   web_.on("/wifi/reset",HTTP_POST,[this](){
     if(!test_auth_())return;
