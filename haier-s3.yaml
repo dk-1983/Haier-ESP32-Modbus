@@ -34,11 +34,7 @@ logger:
 uart:
   - id: haier_uart
     tx_pin: ${haier_tx}
-    rx_pin:
-      number: ${haier_rx}
-      mode:
-        input: true
-        pullup: true
+    rx_pin: ${haier_rx}
     baud_rate: 9600
     data_bits: 8
     parity: NONE
