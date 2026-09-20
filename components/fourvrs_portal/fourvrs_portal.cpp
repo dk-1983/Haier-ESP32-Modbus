@@ -1,6 +1,7 @@
 #include "fourvrs_portal.h"
 #include "HonSelfTest.h"
 #include "status_sensors.h"
+#include "esphome/core/application.h"
 #include "ControlPage.h"
 #include "HomePage.h"
 #include "AboutPage.h"
@@ -198,7 +199,10 @@ void Portal::configure_web_() {
 void Portal::configure_ota_() {
   ArduinoOTA.setHostname(hostname_.c_str()); ArduinoOTA.setPort(8266);
   ArduinoOTA.setPassword(ota_password_.c_str());
-  ArduinoOTA.onStart([]() { ESP_LOGI(TAG, "OTA started"); });
+  ArduinoOTA.onStart([]() { App.feed_wdt(); ESP_LOGI(TAG, "OTA started"); });
+  // ArduinoOTA runs synchronously inside loopTask. Feed only while transferring;
+  // keep the watchdog active so a stalled update is still detected.
+  ArduinoOTA.onProgress([](unsigned int, unsigned int) { App.feed_wdt(); });
   ArduinoOTA.onEnd([]() { ESP_LOGI(TAG, "OTA complete"); });
   ArduinoOTA.onError([](ota_error_t e) { ESP_LOGW(TAG, "OTA error %u", unsigned(e)); });
 }
