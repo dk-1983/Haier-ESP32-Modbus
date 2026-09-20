@@ -1,0 +1,45 @@
+# Diagnostic only. Disconnect GPIO17 from the air conditioner before flashing.
+# No Haier UART, Modbus, Wi-Fi or MQTT. Restore normal firmware after measurement.
+esphome:
+  name: haier-s3
+  build_path: work/gpio17-test
+  project:
+    name: local.haier_gpio17_test
+    version: 0.6.3-gpio17-test
+  on_boot:
+    priority: -100
+    then:
+      - output.turn_off: test_gpio17
+      - logger.log: "GPIO17 TEST: LOW; alternates every 5 seconds. Haier disconnected."
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: arduino
+psram:
+  mode: octal
+  speed: 80MHz
+logger:
+  level: DEBUG
+  hardware_uart: UART0
+  baud_rate: 115200
+output:
+  - platform: gpio
+    id: test_gpio17
+    pin:
+      number: GPIO17
+      inverted: false
+      mode:
+        output: true
+        open_drain: false
+        pullup: false
+        pulldown: false
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          static bool high = false;
+          high = !high;
+          if (high) id(test_gpio17).turn_on();
+          else id(test_gpio17).turn_off();
+          ESP_LOGI("gpio17_test", "GPIO17 commanded %s", high ? "HIGH (3.3 V)" : "LOW (0 V)");
