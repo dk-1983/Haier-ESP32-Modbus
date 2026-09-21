@@ -5,7 +5,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - run: python3 tools/test_host.py
+      - run: pip install jinja2
+      - run: python3 tests/test_discovery.py
   firmware:
     runs-on: ubuntu-latest
     steps:
@@ -16,3 +21,4 @@ jobs:
       - run: pip install -r requirements.txt
       - run: cp secrets.example.yaml secrets.yaml
       - run: esphome compile haier-s3.yaml
+      - run: python tools/test_hon_simulator.py

@@ -45,5 +45,5 @@ for entity,field in [(a[1],"quiet"),(a[2],"display")]:
 assert a[0]["mode_cmd_t"]=="~/set/hvac_mode"
 # Longest supported prefix must fit the worker output buffer.
 for entity in a:
- wire=json.dumps(entity,separators=(",",":")).replace("haier/test","x"*64).replace("haier_test","haier-s3-a4b197")
+ wire=json.dumps(entity,separators=(",",":")).replace("haier/test","x"*64).replace("haier_test","haier-s3-abcdef")
  assert len(wire.encode())+128<2048
