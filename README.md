@@ -2,17 +2,29 @@
 
 # Haier UART → Modbus · ESP32-S3
 
-Локальный шлюз для кондиционера Haier: hOn UART ↔ Modbus RTU/RS-485 и Modbus TCP/Wi-Fi. Основан на открытом компоненте Haier для ESPHome. Облачная учётная запись не требуется.
+**От кондиционера Haier до управления в Home Assistant — одна система из наших открытых проектов.** Здесь находится прошивка ESP32-S3, которая связывает hOn UART кондиционера с локальным управлением, Modbus и MQTT. Сетевой путь через RS-485 обеспечивает **4VRS Gateway на Moxa**, а управление в Home Assistant — **Modbus Devices**. Облачная учётная запись Haier не требуется.
 
-Целевая плата: **ESP32-S3-WROOM-1-N16R8**. UART Haier — 9600 8N1. Основные адреса Modbus повторяют опубликованную карту **YCJ-A002**, дополнительные функции продолжают соответствующие таблицы. Это независимый проект, а не заводская прошивка или официальный продукт Haier. Совместимость с физическим YCJ-A002 кондиционеру не требуется.
+## Полная система 4VRS
 
 ```mermaid
 flowchart LR
-  AC[Haier hOn UART] <--> ESP[ESP32-S3]
-  ESP <--> RS[Трансивер RS-485]
-  RS <--> RTU[Modbus RTU master]
-  ESP <--> WIFI[Wi-Fi: Modbus TCP / веб-пульт / OTA]
+  AC["Кондиционер Haier"] <-->|"hOn UART"| ESP["Haier-ESP32-Modbus"]
+  ESP <-->|"RS-485 / Modbus RTU"| MOXA["Moxa / 4VRS Gateway"]
+  MOXA <-->|"Modbus TCP"| HA["Home Assistant / Modbus Devices"]
+  ESP <-->|"Modbus TCP по Wi-Fi"| HA
 ```
+
+| Часть системы | Что она даёт | Исходники и документация |
+|---|---|---|
+| Контроллер кондиционера | Чтение состояния Haier, команды, веб-пульт, Modbus RTU/TCP, MQTT и OTA | **[Haier-ESP32-Modbus](https://github.com/dk-1983/Haier-ESP32-Modbus)** — этот репозиторий |
+| Сетевой шлюз RS-485 | Соединение последовательной линии с сетью, настройка портов и диагностика | **[Moxa / 4VRS Gateway](https://github.com/dk-1983/moxa-4vrs-gateway)** |
+| Управление в Home Assistant | Интеграция Modbus и профиль YCJ-A002 для базовых параметров кондиционера | **[Modbus Devices](https://github.com/dk-1983/Modbus_Devices)** |
+
+**[Начать сборку всей системы →](docs/SYSTEM.md)** — состав оборудования, выбор подключения, настройка трёх проектов и проверка результата. Для подключения по Wi-Fi ESP работает с Modbus Devices напрямую; Moxa используется в варианте с RS-485.
+
+Modbus Devices и Moxa участвовали в наших стендовых проверках. Состав проверенного тракта и результаты приведены в [отчёте испытаний](docs/VALIDATION.md#системы-использованные-в-проверках).
+
+Целевая плата: **ESP32-S3-WROOM-1-N16R8**. Проверенный кондиционер: **Haier AS25HSL1HRA-W**, UART 9600 8N1. Основные адреса Modbus повторяют карту **YCJ-A002**, дополнительные функции продолжают соответствующие таблицы. Физический адаптер YCJ-A002 для этой схемы не требуется. Это независимый проект, не официальный продукт Haier.
 
 ## Возможности
 
@@ -53,17 +65,9 @@ python -m esphome compile haier-s3.yaml
 
 Страница `/modbus` позволяет включать RTU/TCP, выбирать Unit ID и скорость RTU. TCP работает на порту502 через основное Wi-Fi-подключение; подключения с setup AP отклоняются. Modbus TCP не имеет аутентификации и рассчитан на доверенную локальную сеть.
 
-## Связанные проекты
-
-| Проект | Роль |
-|---|---|
-| [Modbus Devices для Home Assistant](https://github.com/dk-1983/Modbus_Devices) | Клиент Modbus в стендовых проверках через Home Assistant; профиль YCJ-A002 соответствует базовым адресам этого шлюза. |
-| [4VRS Gateway для Moxa](https://github.com/dk-1983/moxa-4vrs-gateway) | Сетевой шлюз RS-485, использованный для проверки физического Modbus RTU на стенде. |
-
-К ESP можно обращаться напрямую по Modbus TCP через Wi-Fi. Для пути через RS-485 используется Moxa; транспорт клиента должен совпадать с режимом Gateway. Настройки и различия Modbus TCP / RAW TCP описаны в [карте регистров](docs/REGISTERS.md#home-assistant-и-moxa).
-
 ## Документация
 
+- **[Вся система: от оборудования до Home Assistant](docs/SYSTEM.md).**
 - [Карта регистров](docs/REGISTERS.md), [CSV](docs/registers.csv), [заводские источники](docs/sources/README.md).
 - [Сборка стенда](docs/HARDWARE.md).
 - [API и подтверждение команд](docs/API.md), [MQTT](docs/MQTT.md).
