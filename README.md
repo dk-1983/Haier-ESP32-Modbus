@@ -1,3 +1,5 @@
+![Haier ESP32 Modbus — локальный шлюз кондиционера](docs/assets/haier_banner.png)
+
 # Haier UART → Modbus · ESP32-S3
 
 Локальный шлюз для кондиционера Haier: hOn UART ↔ Modbus RTU/RS-485 и Modbus TCP/Wi-Fi. Основан на открытом компоненте Haier для ESPHome. Облачная учётная запись не требуется.
