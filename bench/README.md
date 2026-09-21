@@ -1,74 +1,76 @@
+[English](README.md) | [Русский](README_RU.md)
+
 # Haier hOn: Arduino Nano bench simulator 0.1.1
 
-Имитатор ответов кондиционера для проверки **обычной прошивки ESP32-S3** и двух оптических каналов на столе. Реальный кондиционер полностью отключён от стенда. Независимый тестовый инструмент, не заводская прошивка и не полная модель поведения Haier.
+Simulates AC responses to test the **normal ESP32-S3 firmware** and two optical channels on a bench, with the real AC completely disconnected. An independent test tool, not factory firmware or a complete Haier behavioral model.
 
-## Подключение
+## Connections
 
-Подтверждённая плата: классическая **Nano ATmega328P, 5 В**. На ESP остаётся основная прошивка проекта, GPIO17 TX / GPIO18 RX, 9600 8N1, без инверсии.
+Confirmed board: classic **Nano ATmega328P, 5 V**. ESP runs the main firmware, GPIO17 TX / GPIO18 RX, 9600 8N1, no inversion.
 
-На Nano выбран SoftwareSerial: **D10 RX, D11 TX, 9600 8N1**. Аппаратный UART D0/D1 оставлен для USB-диагностики 115200; это исключает соединение выходов USB-UART адаптера и оптопары на RX0. На стороне ESP испытывается именно аппаратный UART полной прошивки, а не отдельный loopback-тест.
+Nano uses SoftwareSerial: **D10 RX, D11 TX, 9600 8N1**. Hardware UART D0/D1 remains for USB diagnostics at 115200, avoiding an output conflict between the USB-UART adapter and optocoupler on RX0. ESP exercises the main firmware's hardware UART, not a separate loopback program.
 
-Используем два независимых канала из [схемы](../docs/PC817-UART-BENCH.md), PC817 или проверенные по распиновке NEC PS2561-1:
+Use two independent channels from the [schematic](../docs/PC817-UART-BENCH.md), PC817 or NEC PS2561-1 after pinout verification:
 
-| Соединение | На стенде |
+| Connection | Bench wiring |
 |---|---|
-| U1 анод, вывод 1 | +5 В Nano через 680 Ом |
-| U1 катод, вывод 2 | Nano **D11 TX** |
-| U1 коллектор, вывод 4 | ESP **GPIO18 RX**, подтяжка 2,2 кОм к **3,3 В ESP** |
-| U1 эмиттер, вывод 3 | GND ESP |
-| U2 анод, вывод 1 | +3,3 В ESP через 390 Ом |
-| U2 катод, вывод 2 | ESP **GPIO17 TX** |
-| U2 коллектор, вывод 4 | Nano **D10 RX**, подтяжка 4,7 кОм к **5 В Nano** |
-| U2 эмиттер, вывод 3 | GND Nano |
+| U1 anode, pin 1 | Nano +5 V through 680 Ω |
+| U1 cathode, pin 2 | Nano **D11 TX** |
+| U1 collector, pin 4 | ESP **GPIO18 RX**, 2.2 kΩ pull-up to **ESP 3.3 V** |
+| U1 emitter, pin 3 | ESP GND |
+| U2 anode, pin 1 | ESP +3.3 V through 390 Ω |
+| U2 cathode, pin 2 | ESP **GPIO17 TX** |
+| U2 collector, pin 4 | Nano **D10 RX**, 4.7 kΩ pull-up to **Nano 5 V** |
+| U2 emitter, pin 3 | Nano GND |
 
-Оба канала неинвертирующие. Никаких прямых перемычек TX-RX в обход оптопар; старый делитель/стабилитрон не подключать параллельно выходу U1. Пины 5 В, 3,3 В и TX — разные электрические цепи.
+Both channels are non-inverting. Do not bypass optocouplers with direct TX-RX jumpers or parallel the old divider/Zener with U1's output. 5 V, 3.3 V and TX are separate nets.
 
-Nano питается от USB, ESP — от своего подходящего источника/программатора. **Не питать ESP от выхода 3,3 В Nano.** Не соединять выходы разных источников питания друг с другом. Общая земля допустима; при общей земле/общем USB это не испытание гальванической изоляции. Соединения менять при снятом питании.
+Power Nano from USB and ESP from its suitable supply/programmer. **Do not power ESP from Nano's 3.3 V output.** Do not connect separate supply outputs together. Shared ground is acceptable, but shared ground/USB means this is not a galvanic-isolation test. Rewire with power removed.
 
-## Сборка и загрузка
+## Build and upload
 
-Открыть `haier_simulator/haier_simulator.ino` в Arduino IDE. Выбрать Arduino Nano, ATmega328P. Для старого загрузчика — ATmega328P (Old Bootloader); тип загрузчика конкретной платы ещё не определён. Порт Nano определить отдельно, **не считать COM6 её портом по старым сообщениям**. Встроенная SoftwareSerial — единственная библиотека.
+Open `haier_simulator/haier_simulator.ino` in Arduino IDE. Select Arduino Nano, ATmega328P, or ATmega328P (Old Bootloader) for older bootloaders; the specific board's bootloader was not yet identified in this record. Identify Nano's current port separately; **do not assume COM6 from old messages**. Only the built-in SoftwareSerial library is required.
 
-CLI (из корня проекта):
+CLI from repository root:
 
 ```powershell
 arduino-cli compile --fqbn arduino:avr:nano:cpu=atmega328old --build-path work/nano-simulator bench/haier_simulator
 ```
 
-Для нового загрузчика использовать `cpu=atmega328`. Это выбор скорости/загрузчика Nano; прошлые 2 Мбод относятся к S3, а не к Nano. Сборка проверена Arduino AVR core 1.8.6: 6928 байт flash, 721 байт статической RAM. 2026-09-20: v0.1.1 загружена в Nano ATmega328P, flash проверена чтением. Обмен через оптопары пока не прошёл: входящие кадры искажены.
+For a newer bootloader use `cpu=atmega328`. This selects Nano bootloader/speed; previous 2 Mbaud uploads concerned S3, not Nano. Build checked with Arduino AVR core 1.8.6: 6928 flash bytes, 721 static RAM bytes. On 2026-09-20, v0.1.1 was uploaded to Nano ATmega328P and flash readback verified. At that stage optical communication had not passed: incoming frames were distorted. Later bench results are in [HARDWARE.md](../docs/HARDWARE.md).
 
-## Что имитируется
+## Simulated behavior
 
-- Версия 0x61/0x62 (идентификатор SIMULATR, объявлена поддержка CRC), ID 0x70/0x71.
-- Опрос 0x4D01 и big-data 0x4DFE, ответ STATUS 0x02.
-- Групповая запись 0x6001 из текущей основной прошивки, сохранение всех 10 управляющих байт в RAM.
-- Подмножество одиночных записей 0x5Dxx: питание, температура, режим, вентилятор, жалюзи, display, quiet, boost, sleep и др.; неизвестные команды возвращают INVALID 0x03.
-- Пустые аварии 0x73/0x74, управление связью 0xFC/0xFD, подтверждение 0xF7.
-- Контрольная сумма, CRC-16/ARC, FF55 stuffing, восстановление после повреждения/обрыва пакета. Максимальный payload 64 байта; интервал между байтами >100 мс сбрасывает незаконченный кадр.
+- Version 0x61/0x62 (SIMULATR identifier, CRC capability), ID 0x70/0x71.
+- Poll 0x4D01 and big-data 0x4DFE, STATUS response 0x02.
+- Group write 0x6001 from the current main firmware; all 10 control bytes stored in RAM.
+- Subset of 0x5Dxx single writes: power, temperature, mode, fan, swing, display, quiet, boost, sleep, etc.; unknown commands return INVALID 0x03.
+- Empty alarms 0x73/0x74, link control 0xFC/0xFD, acknowledgement 0xF7.
+- Checksum, CRC-16/ARC, FF55 stuffing, corrupt/truncated packet recovery. Maximum payload 64 bytes; inter-byte gap >100 ms discards an incomplete frame.
 
-Размер STATUS соответствует локальной конфигурации: 2 байта subtype + 10 управления + 18 датчиков + 4 дополнительных байта датчиков. Big-data добавляет 14 байт. Заголовок статуса 0 байт. Смена этих настроек в ESP требует синхронного изменения имитатора.
+STATUS matches the local configuration: 2 subtype bytes + 10 control + 18 sensor + 4 extra sensor bytes. Big-data adds 14 bytes. Status header size is 0. Changing ESP settings requires matching simulator changes.
 
-Начальное состояние: выключен, выбран COOL, уставка 24 °C, fan AUTO, display включён. Фиктивные показания: комната **23,5 °C**, влажность 45%, улица 20 °C. Команды изменяют состояние сразу, оно сохраняется до перезагрузки Nano. Тепловая динамика, компрессор, задержки циклов, аварии и автономные изменения режимов не моделируются. Нулевые big-data мощности/приводов — заглушки.
+Initial state: power off, COOL selected, 24 °C setpoint, AUTO fan, display on. Synthetic readings: room **23.5 °C**, humidity 45%, outdoor 20 °C. Commands change state immediately until Nano reboots. Thermal behavior, compressor, cycle delays, faults and autonomous mode changes are not simulated. Zero big-data power/drive values are placeholders.
 
-**Веб-интерфейс/MQTT ESP покажет эти значения как обычные данные устройства.** Для первого теста использовать веб-интерфейс и отключить MQTT/Modbus через штатные настройки ESP, если к этому экземпляру привязаны домашние автоматизации. Отдельное MQTT-имя/топик нужны, если позднее подключаем стенд к HA. Прошивка ESP сама не маркирует показания как синтетические.
+**ESP web/MQTT presents these values as normal device data.** Initially use the web panel and disable MQTT/Modbus if home automations are bound to this controller. Use separate MQTT names/topics if later connecting the bench to HA. ESP firmware does not label the values as synthetic.
 
-## Проверка на столе
+## Bench procedure
 
-1. Открыть USB-журнал Nano, 115200. Открытие монитора может перезапустить Nano и сбросить её состояние.
-2. Запустить обычную ESP, дождаться инициализации hOn. В журнале Nano должны появиться 0x61, 0x70, 0x01, 0x73; на ESP — First HVAC status received / available, растущий status_frames и 23,5 °C.
-3. Из веб-интерфейса ESP проверить ON, OFF, уставку, режим, fan, quiet/display и жалюзи. `commands` Nano растёт, последующие опросы возвращают последнее состояние. GPIO13 LED Nano мигает при валидном входящем пакете.
-4. Оставить минимум на 10 минут. Ожидаем рост `good` и `sent`, отсутствие роста `bad`, `partial_timeout`, `overflow` и отсутствие таймаутов ESP при обычном обмене. Это проверка стенда, не гарантия поведения реального Haier.
-5. В USB-журнал отправить `m`: ответы прекратятся, ESP должна увидеть таймауты. `r` возвращает ответы; проверить восстановление связи (после длинной паузы ESP может повторить инициализацию).
-6. Команда `c` однократно изменяет байт следующего ответа без пересчёта суммы/CRC. ESP должна отвергнуть кадр и восстановить обмен на следующем запросе. `s` печатает статистику немедленно.
+1. Open Nano USB logs at 115200. Opening a monitor may restart Nano and reset its state.
+2. Start normal ESP firmware and wait for hOn initialization. Nano should log 0x61, 0x70, 0x01, 0x73; ESP should report First HVAC status received / available, increasing status_frames and 23.5 °C.
+3. Test ON/OFF, setpoint, mode, fan, quiet/display and louvres from the ESP panel. Nano `commands` increases; polls return the latest state. GPIO13 LED blinks on a valid received packet.
+4. Leave for at least 10 minutes. Expect increasing `good`/`sent`, no growth in `bad`, `partial_timeout`, `overflow`, and no ESP timeout in ordinary exchange. This validates the bench, not real Haier behavior.
+5. Send `m` to Nano USB: replies stop and ESP should time out. `r` resumes replies; verify recovery (ESP may repeat initialization after a long pause).
+6. `c` corrupts one byte of the next reply without recomputing checksum/CRC. ESP should reject it and recover on the next request. `s` prints statistics immediately.
 
-`bytes=0` — Nano не получает байты от ESP (проверять U2/TX17/D10). `bytes` растёт, `good=0` — неверные уровни, скорость, инверсия или повреждение кадров. `good` и `sent` растут, ESP не видит ответов — проверять U1/D11/RX18. SoftwareSerial также может терять данные; для этого есть счётчик `overflow`. Это направления диагностики, не однозначный диагноз по одному счётчику.
+`bytes=0`: Nano receives no ESP bytes (check U2/TX17/D10). Increasing bytes with good=0 suggests levels, baud, inversion or framing. Increasing good/sent without ESP replies suggests U1/D11/RX18. SoftwareSerial may also lose data; check overflow. These are diagnostic directions, not unique diagnoses.
 
-Успех доказывает работу полной ESP-прошивки и адаптера с 5-вольтовыми выводами Nano при 9600 бод. Он **не доказывает**, что выход TX реального Haier способен поглощать тот же ток LED или имеет такие же пороги/фронты.
+Success demonstrates main ESP firmware and adapter operation with 5 V Nano pins at 9600 baud. It **does not prove** that real Haier TX can sink the same LED current or has identical thresholds/edges.
 
-Версия 0.1.1 печатает `WIRE RX` после паузы 30 мс: до 96 сырых байтов для диагностики искажений перед разбором пакета. Это фактически принятые SoftwareSerial байты, а не измерение аналоговой формы сигнала.
+Version 0.1.1 prints `WIRE RX` after 30 ms silence: up to 96 raw received SoftwareSerial bytes before frame parsing. This is not an analog waveform measurement.
 
-## Автоматические проверки
+## Automated checks
 
-`python tools/test_hon_simulator.py` использует HaierProtocol 0.9.31 из локальной сборки ESP как независимый эталон кодирования/разбора. Проверяет 2000 комбинаций payload/CRC, FF55, повреждение суммы/CRC, усечённые/последовательные кадры, восстановление, handshake и сохранение команд. Это host-тесты, не электрические измерения.
+`python tools/test_hon_simulator.py` uses HaierProtocol 0.9.31 from the local ESP build as an independent codec reference. It checks 2000 payload/CRC combinations, FF55, checksum/CRC corruption, truncated/sequential frames, recovery, handshake and command persistence. These are host tests, not electrical measurements.
 
-Код имитатора написан отдельно, MIT. Источники формата для совместимости: `components/haier/hon_packet.h`, `hon_climate.cpp` и HaierProtocol 0.9.31; исходники сторонних библиотек в этот скетч не копируются. Arduino AVR core и SoftwareSerial сохраняют собственные лицензии.
+Simulator code is independently written, MIT. Format references: `components/haier/hon_packet.h`, `hon_climate.cpp` and HaierProtocol 0.9.31; third-party source is not copied into this sketch. Arduino AVR core and SoftwareSerial retain their own licenses.

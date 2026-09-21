@@ -1,110 +1,130 @@
-![Haier ESP32 Modbus — локальный шлюз кондиционера](docs/assets/haier_banner.png)
+[English](README.md) | [Русский](README_RU.md)
 
-# Haier в Home Assistant · MQTT и Modbus · ESP32-S3
+![Haier ESP32 Modbus — local air conditioner bridge](docs/assets/haier_banner.png)
 
-**Наш контроллер на ESP32-S3 устанавливается вместо оригинального Wi-Fi-модуля Haier и подключается к предназначенному для него UART-разъёму на материнской плате внутреннего блока кондиционера.** Через этот разъём контроллер обменивается командами и состоянием с кондиционером. Питание и согласование уровней UART выполняются по [схеме проекта](#электрическая-схема); распиновку разъёма необходимо сверить для своей модели.
+<a id="haier-в-home-assistant--mqtt-и-modbus--esp32-s3"></a>
 
-**Добавьте кондиционер Haier в свой умный дом: управление из Home Assistant, расписания и автоматизации по вашим датчикам — локально, без облачной учётной записи Haier.** Прошивка связывает UART кондиционера с MQTT по Wi-Fi и автоматически передаёт Home Assistant описание климатического устройства, тихого режима, дисплея и положений жалюзи.
+# Haier in Home Assistant · MQTT and Modbus · ESP32-S3
 
-Для MQTT-варианта нужны ESP32-S3, питание и согласование уровней UART, Wi-Fi и MQTT-брокер. MAX485 и Moxa нужны только при выборе RS-485. Веб-пульт помогает настроить контроллер и управлять кондиционером напрямую из браузера. Для систем с Modbus предусмотрены TCP/RTU, готовый профиль **Modbus Devices** и **4VRS Gateway на Moxa**.
+**Our ESP32-S3 controller replaces the original Haier Wi-Fi module and connects to its UART connector on the indoor unit's main board.** It exchanges commands and status with the air conditioner through this connector. Follow the [project schematic](#electrical-schematic) for power and UART level conversion; verify the connector pinout for your model.
 
-**[Подключение через MQTT](#home-assistant-через-mqtt)** · **[Подключение через Modbus Devices](#готовая-интеграция-с-home-assistant)** · **[Сборка прошивки](#сборка)** · **[Электрическая схема](#электрическая-схема)**
+**Bring your Haier air conditioner into your smart home: Home Assistant controls, schedules and automations using your own sensors — locally, without a Haier cloud account.** The firmware bridges the air conditioner's UART to MQTT over Wi-Fi and automatically announces climate controls, quiet mode, display and louvre positions to Home Assistant.
 
-Проверенная аппаратная связка: **ESP32-S3-WROOM-1 N16R8 + Haier AS25HSL1HRA-W**. Другие модели требуют проверки совместимости UART и протокола.
+For MQTT, you need an ESP32-S3, power supply and UART level conversion, Wi-Fi and an MQTT broker. MAX485 and Moxa are used for the RS-485 option. The web panel provides setup and direct browser control. Modbus installations can use TCP/RTU, the ready-made **Modbus Devices** profile and **4VRS Gateway on Moxa**.
 
-## Home Assistant через MQTT
+**[Connect using MQTT](#home-assistant-via-mqtt)** · **[Connect using Modbus Devices](#ready-made-home-assistant-integration)** · **[Build the firmware](#build)** · **[Electrical schematic](#electrical-schematic)**
 
-**Подключите контроллер к своему MQTT-брокеру — прошивка сама передаст Home Assistant описание устройства и органов управления.** Так кондиционер становится частью умного дома: локальное управление по Wi-Fi, автоматизации и отображение состояния кондиционера. Для этого пути нужны MQTT-брокер и интеграция MQTT в Home Assistant; Modbus Devices и шлюз RS-485 не требуются.
+Tested hardware: **ESP32-S3-WROOM-1 N16R8 + Haier AS25HSL1HRA-W**. Other models require UART and protocol compatibility checks.
 
-### Что появляется автоматически
+<a id="home-assistant-через-mqtt"></a>
 
-MQTT Discovery объединяет пять сущностей в устройство **Haier S3**:
+## Home Assistant via MQTT
 
-| Сущность | Возможности |
+**Connect the controller to your MQTT broker and the firmware will publish its device and control definitions to Home Assistant.** This brings local Wi-Fi control, automations and air conditioner status into your smart home. This option requires an MQTT broker and Home Assistant's MQTT integration; Modbus Devices and an RS-485 gateway are not required.
+
+<a id="что-появляется-автоматически"></a>
+
+### Automatically discovered entities
+
+MQTT Discovery groups five entities under the **Haier S3** device:
+
+| Entity | Capabilities |
 |---|---|
-| Климат | Включение/выключение, охлаждение, обогрев, осушение, вентиляция и авто; уставка 16–30 °C и текущая температура; скорость вентилятора; качание жалюзи по одной или обеим осям; турбо и сон |
-| Тихий режим | Отдельный переключатель Quiet |
-| Дисплей | Включение/выключение дисплея кондиционера |
-| Вертикальное положение жалюзи | Выбор фиксированного положения вверх-вниз |
-| Горизонтальное положение жалюзи | Выбор фиксированного положения влево-вправо |
+| Climate | Power, cooling, heating, dry, fan-only and auto; 16–30 °C setpoint and current temperature; fan speed; single-axis or both-axis swing; boost and sleep |
+| Quiet mode | Separate Quiet switch |
+| Display | Air conditioner display on/off |
+| Vertical louvre position | Select a fixed up/down position |
+| Horizontal louvre position | Select a fixed left/right position |
 
-Сущности можно добавить на панель Home Assistant и использовать в сценариях: менять уставку по расписанию, включать тихий режим вечером, выключать дисплей на ночь или управлять охлаждением серверной по датчикам.
+Add these entities to your dashboard and automations: schedule setpoints, enable quiet mode in the evening, turn off the display at night or control server-room cooling using sensors.
 
-Через MQTT доступны **все реализованные команды управления**, включая блокировку, а в топиках состояния и результата — телеметрия и подтверждение команд. Блокировка и дополнительные диагностические сущности автоматически не создаются: их можно подключить отдельно по [описанию топиков](docs/MQTT.md#топики).
+MQTT exposes **all implemented control commands**, including locking, plus telemetry and command confirmation in state/result topics. Lock and additional diagnostic entities are not discovered automatically; configure them separately using the [topic reference](docs/MQTT.md#topics).
 
-### Как подключить
+<a id="как-подключить"></a>
 
-1. Подготовьте MQTT-брокер и подключите к нему интеграцию **MQTT** в Home Assistant с включённым обнаружением устройств.
-2. Откройте веб-страницу контроллера **`/mqtt`**. Укажите адрес брокера, порт (обычно **1883**), учётные данные и уникальный префикс топиков для этого контроллера.
-3. Включите **MQTT** и **обнаружение Home Assistant**, сохраните настройки. MQTT изначально выключен; Discovery по умолчанию включён.
-4. После подключения к брокеру найдите устройство **Haier S3** в интеграции MQTT и добавьте его сущности на панель. Для доступного управления контроллер должен получать свежие данные от кондиционера.
+### Connection steps
 
-MQTT включается независимо от Modbus RTU/TCP и может работать вместе с ними и веб-пультом. Все интерфейсы используют общий арбитр команд: пока одна команда ожидает подтверждения, следующая может быть отклонена как `busy`. Для своих автоматизаций отправляйте команды последовательно, **без retain**.
+1. Set up an MQTT broker and connect Home Assistant's **MQTT** integration to it with discovery enabled.
+2. Open **`/mqtt`** on the controller. Enter the broker address, port (usually **1883**), credentials and a unique topic prefix for this controller.
+3. Enable **MQTT** and **Home Assistant discovery**, then save. MQTT starts disabled; Discovery is enabled by default.
+4. Once connected, find **Haier S3** in the MQTT integration and add its entities to your dashboard. The controller needs fresh air conditioner data for controls to be available.
 
-Прошивка публикует фактическое состояние Haier и результат выполнения команд. В текущем Discovery переключатели Quiet и Display имеют оптимистичную индикацию, затем уточняемую телеметрией; остальные сущности — без неё. На реальном кондиционере проверена серия из **41 MQTT-команды** с подтверждением и доставка пяти Discovery-конфигураций брокеру. Отдельная проверка интерфейса Home Assistant с ESP32-S3 в эту серию не входила.
+MQTT can run alongside Modbus RTU/TCP and the web panel. All interfaces share a command arbiter: while one command awaits confirmation, another may be rejected as `busy`. Send automation commands sequentially, **without retain**.
 
-**[Настройка MQTT, команды, диагностика и поведение при потере связи →](docs/MQTT.md)**
+The firmware publishes actual Haier state and command results. In the current Discovery definitions, Quiet and Display switches use optimistic indication, subsequently corrected by telemetry; other entities do not. A series of **41 MQTT commands** was confirmed by a real air conditioner, and all five Discovery configurations reached the broker. A separate Home Assistant UI test with ESP32-S3 was not part of that series.
 
-## Готовая интеграция с Home Assistant
+**[MQTT setup, commands, diagnostics and connection recovery →](docs/MQTT.md)**
 
-**Для тех, кто повторяет проект, уже есть готовое решение: [Modbus Devices](https://github.com/dk-1983/Modbus_Devices/blob/main/README_RU.md#4vrs), версия 1.3.0 или новее, с отдельным профилем 4VRS Haier-ESP32.** Вручную описывать регистры в Home Assistant не требуется.
+<a id="готовая-интеграция-с-home-assistant"></a>
 
-Профиль предоставляет управление питанием, режимом, температурой, вентилятором, качанием жалюзи и пресетами; отдельные переключатели тихого режима и дисплея, выбор фиксированных положений жалюзи, диагностику связи и выполнения команд. Состояние обновляется после подтверждения контроллером и обратного чтения.
+## Ready-made Home Assistant integration
 
-1. Установите или обновите **Modbus Devices** через HACS и перезапустите Home Assistant. [Инструкция установки](https://github.com/dk-1983/Modbus_Devices/blob/main/README_RU.md#установка).
-2. На ESP откройте `/modbus` и включите нужный транспорт: **TCP** для прямого подключения по Wi-Fi или **RTU** для RS-485.
-3. В Home Assistant добавьте интеграцию **Modbus Devices**, новый хаб и выберите производителя **4VRS**, модель **Haier-ESP32**.
-4. Для прямого подключения выберите **Modbus TCP/IP**, IP контроллера, порт **502** и его Unit ID. При подключении через **Moxa / 4VRS Gateway** укажите адрес и порт шлюза, согласовав транспорт с его режимом — [все варианты подключения](docs/SYSTEM.md#2-выбрать-путь-связи).
+**A ready-made solution is available for anyone building this project: [Modbus Devices](https://github.com/dk-1983/Modbus_Devices#4vrs), version 1.3.0 or later, with a dedicated 4VRS Haier-ESP32 profile.** No manual register definitions in Home Assistant are required.
 
-В Modbus Devices также есть генератор карточки устройства для панели Home Assistant. Старый профиль Haier YCJ-A002 сохранён отдельно; для расширенных функций этой разработки выбирайте **4VRS Haier-ESP32**.
+The profile provides power, mode, temperature, fan, swing and preset controls; separate quiet/display switches; fixed louvre positions; and link/command diagnostics. State updates follow controller confirmation and readback.
 
-По описанию Modbus Devices, полная аппаратная проверка расширенного профиля запланирована с производственной платой. Выполненные проверки нашей прошивки и стенда перечислены отдельно в [VALIDATION.md](docs/VALIDATION.md).
+1. Install or update **Modbus Devices** through HACS and restart Home Assistant. [Installation guide](https://github.com/dk-1983/Modbus_Devices#installation).
+2. Open `/modbus` on the ESP and enable **TCP** for direct Wi-Fi access or **RTU** for RS-485.
+3. Add the **Modbus Devices** integration and a new hub. Select manufacturer **4VRS**, model **Haier-ESP32**.
+4. For direct access, select **Modbus TCP/IP**, the controller IP, port **502** and its Unit ID. For **Moxa / 4VRS Gateway**, use the gateway address/port and match its transport mode — [connection options](docs/SYSTEM.md#2-choose-the-connection-path).
 
-## Полная система 4VRS
+Modbus Devices also includes a dashboard device-card generator. The original Haier YCJ-A002 profile remains separate; select **4VRS Haier-ESP32** for this project's extended features.
+
+According to Modbus Devices documentation, full hardware validation of the extended profile is planned with the production PCB. Completed firmware and bench checks are listed separately in [VALIDATION.md](docs/VALIDATION.md).
+
+<a id="полная-система-4vrs"></a>
+
+## The complete 4VRS system
 
 ```mermaid
 flowchart LR
-  AC["Кондиционер Haier"] <-->|"hOn UART"| ESP["Haier-ESP32-Modbus"]
+  AC["Haier air conditioner"] <-->|"hOn UART"| ESP["Haier-ESP32-Modbus"]
   ESP <-->|"RS-485 / Modbus RTU"| MOXA["Moxa / 4VRS Gateway"]
   MOXA <-->|"Modbus TCP"| HA["Home Assistant / Modbus Devices"]
-  ESP <-->|"Modbus TCP по Wi-Fi"| HA
-  ESP <-->|"MQTT по Wi-Fi"| BROKER["MQTT-брокер"]
-  BROKER <-->|"MQTT Discovery"| HAMQTT["Home Assistant / MQTT"]
+  ESP <-->|"Modbus TCP over Wi-Fi"| HA
+  ESP <-->|"MQTT over Wi-Fi"| BROKER["MQTT broker"]
+  BROKER <-->|"MQTT / Discovery"| HAMQTT["Home Assistant / MQTT"]
 ```
 
-| Часть системы | Что она даёт | Исходники и документация |
+| Component | Role | Source and documentation |
 |---|---|---|
-| Контроллер кондиционера | Чтение состояния Haier, команды, веб-пульт, Modbus RTU/TCP, MQTT и OTA | **[Haier-ESP32-Modbus](https://github.com/dk-1983/Haier-ESP32-Modbus)** — этот репозиторий |
-| Сетевой шлюз RS-485 | Соединение последовательной линии с сетью, настройка портов и диагностика | **[Moxa / 4VRS Gateway](https://github.com/dk-1983/moxa-4vrs-gateway)** |
-| Управление в Home Assistant | Готовый профиль **4VRS Haier-ESP32**: климат, дополнительные функции и диагностика | **[Modbus Devices](https://github.com/dk-1983/Modbus_Devices)** |
+| Air conditioner controller | Haier telemetry, commands, web panel, Modbus RTU/TCP, MQTT and OTA | **[Haier-ESP32-Modbus](https://github.com/dk-1983/Haier-ESP32-Modbus)** — this repository |
+| RS-485 network gateway | Serial-to-network connection, port configuration and diagnostics | **[Moxa / 4VRS Gateway](https://github.com/dk-1983/moxa-4vrs-gateway)** |
+| Home Assistant control | Ready-made **4VRS Haier-ESP32** profile: climate, extended features and diagnostics | **[Modbus Devices](https://github.com/dk-1983/Modbus_Devices)** |
 
-**[Начать сборку всей системы →](docs/SYSTEM.md)** — состав оборудования, выбор подключения, настройка трёх проектов и проверка результата. Для подключения по Wi-Fi ESP работает с Modbus Devices напрямую; Moxa используется в варианте с RS-485.
+**[Build the complete system →](docs/SYSTEM.md)** — hardware, connection options, setup of the three projects and verification. ESP connects directly to Modbus Devices over Wi-Fi; the RS-485 option uses Moxa.
 
-Modbus Devices и Moxa участвовали в наших стендовых проверках. Состав проверенного тракта и результаты приведены в [отчёте испытаний](docs/VALIDATION.md#системы-использованные-в-проверках).
+Modbus Devices and Moxa participated in our bench tests. See the [validation report](docs/VALIDATION.md#systems-used-in-validation) for the tested path and results.
 
-Целевая плата: **ESP32-S3-WROOM-1-N16R8**. Проверенный кондиционер: **Haier AS25HSL1HRA-W**, UART 9600 8N1. Основные адреса Modbus повторяют карту **YCJ-A002**, дополнительные функции продолжают соответствующие таблицы. Физический адаптер YCJ-A002 для этой схемы не требуется. Это независимый проект, не официальный продукт Haier.
+Target: **ESP32-S3-WROOM-1-N16R8**. Tested AC: **Haier AS25HSL1HRA-W**, UART 9600 8N1. Base Modbus addresses follow **YCJ-A002**; extensions continue the respective tables. A physical YCJ-A002 adapter is not required. This is an independent project, not an official Haier product.
 
-## Возможности
+<a id="возможности"></a>
 
-- MQTT-клиент внешнего брокера через Wi-Fi: состояние, команды, Last Will, обнаружение Home Assistant и отдельный выключатель на `/mqtt`.
-- Локальный веб-пульт: включение/выключение, температура, режим, вентилятор, обе оси жалюзи, турбо/сон, тихий режим, дисплей и фиксированные положения жалюзи.
-- Первичная настройка Wi-Fi через собственную точку доступа; сохранение сети, повторное подключение и резервная точка доступа.
-- ArduinoOTA с паролем.
-- Одна карта регистров и один арбитр команд для Modbus RTU и TCP.
-- **RTU и TCP включаются независимо**, настройки сохраняются. Оба по умолчанию выключены; веб-пульт и OTA продолжают работать.
-- Подтверждение команды по двум новым status-пакетам hOn. Чтение Modbus показывает полученное состояние, не желаемое.
+## Features
 
-## Версия 1.0.0
+- External MQTT broker over Wi-Fi: state, commands, Last Will, Home Assistant discovery and an independent switch at `/mqtt`.
+- Local web panel: power, temperature, mode, fan, both swing axes, boost/sleep, quiet, display and fixed louvre positions.
+- Wi-Fi setup through the controller's access point, saved networks, reconnection and fallback access point.
+- Password-protected ArduinoOTA.
+- Shared register map and command arbiter for Modbus RTU and TCP.
+- **RTU and TCP can be enabled independently**, with saved settings. Both default to off; web control and OTA remain available.
+- Commands confirmed by two new matching hOn status packets. Modbus reads report observed state, not requested state.
 
-Проверены ESP32-S3 N16R8, обмен с Haier AS25HSL1HRA-W через согласование уровней, веб-команды с подтверждением фактическим состоянием и стендовый RS-485. Исправлены повреждение памяти при копировании датчиков hOn и перезапуск watchdog во время ArduinoOTA. Подробные результаты и границы проверок: [VALIDATION.md](docs/VALIDATION.md).
+<a id="версия-100"></a>
 
-Релиз содержит исходники. Собирайте прошивку со своими паролями: готовый образ с индивидуальными учётными данными не публикуется.
+## Version 1.0.0
 
-## Сборка
+Validated: ESP32-S3 N16R8, Haier AS25HSL1HRA-W communication through level conversion, web commands confirmed by actual state, and bench RS-485. Fixed memory corruption when copying hOn sensors and a watchdog reset during ArduinoOTA. Results and limits: [VALIDATION.md](docs/VALIDATION.md).
 
-1. Установить Python 3.11 и Git.
-2. Скопировать `secrets.example.yaml` в `secrets.yaml`, задать свои пароли.
-3. На Windows выполнить `./Build.ps1`. Либо:
+The release contains source code. Build with your own credentials; no firmware image containing individual credentials is published.
+
+<a id="сборка"></a>
+
+## Build
+
+1. Install Python 3.11 and Git.
+2. Copy `secrets.example.yaml` to `secrets.yaml` and set your passwords.
+3. On Windows run `./Build.ps1`, or:
 
 ```sh
 python -m venv .venv
@@ -113,40 +133,50 @@ python -m pip install -r requirements.txt
 python -m esphome compile haier-s3.yaml
 ```
 
-Зависимости закреплены: ESPHome2026.6.5, HaierProtocol0.9.31. Сборка не запускает прошивку устройства. Конфигурация рассчитана на 16MB Flash и8MB octal PSRAM; это не образ для ESP8266 или одноядерного ESP32-S0WD.
+Pinned dependencies: ESPHome 2026.6.5, HaierProtocol 0.9.31. Building does not flash a device. The configuration targets 16 MB Flash and 8 MB octal PSRAM; it is not an image for ESP8266 or single-core ESP32-S0WD.
 
-## Электрическая схема
+<a id="электрическая-схема"></a>
 
-![Схема ESP32-S3, UART Haier и MAX485](docs/assets/haier-s3-schematic.png)
+## Electrical schematic
 
-[Открыть SVG](docs/assets/haier-s3-schematic.svg) · [Номиналы, проверка пинов и примечания](docs/SCHEMATIC.md). Оба входа RX защищены делителями 10/20 кОм; номера площадок модуля подписаны отдельно от GPIO.
+![ESP32-S3, Haier UART and MAX485 schematic](docs/assets/haier-s3-schematic-en.png)
 
-### Сборка для MQTT без RS-485
+[Open SVG](docs/assets/haier-s3-schematic-en.svg) · [Values, verified pins and notes](docs/SCHEMATIC.md). Both RX inputs use 10/20 kΩ dividers; module pad numbers are shown separately from GPIO numbers.
 
-**Если нужен Home Assistant через MQTT, часть схемы «03 RS-485» можно не собирать.** Не устанавливайте **U3 (MAX485), R4, R5, R6**, локальный конденсатор питания MAX485 и разъём A/B. Соединения этого узла с GPIO15, GPIO16 и GPIO21 не нужны.
+<a id="сборка-для-mqtt-без-rs-485"></a>
 
-Остаются ESP32-S3, питание, цепи EN/BOOT и UART Haier: **GPIO17 → RX Haier**, **TX Haier → делитель R2/R3 → GPIO18**, общая земля. **R2 и R3 обязательно сохраняются** — это согласование входа от кондиционера, а не часть RS-485.
+### MQTT build without RS-485
 
-Используется та же основная прошивка `haier-s3.yaml`; отдельная сборка не нужна. На `/modbus` оставьте **RTU выключенным**, на `/mqtt` включите MQTT и Discovery. Веб-пульт и OTA остаются доступны. **Modbus TCP по Wi-Fi также работает без MAX485**, если позже понадобится подключение через Modbus Devices.
+**For Home Assistant over MQTT, you can omit the entire “03 RS-485” section.** Do not install **U3 (MAX485), R4, R5, R6**, the local MAX485 supply capacitor or A/B connector. Connections from that section to GPIO15, GPIO16 and GPIO21 are unnecessary.
 
-## Первый запуск
+Keep the ESP32-S3, supply, EN/BOOT circuits and Haier UART: **GPIO17 → Haier RX**, **Haier TX → R2/R3 divider → GPIO18**, and common ground. **Keep R2 and R3**: they convert the air conditioner's input signal level and are not part of RS-485.
 
-Аппаратное подключение: [HARDWARE.md](docs/HARDWARE.md). После прошивки подключиться к точке `haier-s3-<suffix>-setup` с паролем `setup_password`, открыть `http://192.168.4.1`, выбрать сеть2.4GHz. После получения адреса открыть `/control`. Логин `admin`, пароль — `ota_password` из локального `secrets.yaml` (в этой версии общий для web/OTA).
+Use the same main `haier-s3.yaml` firmware; no separate build is needed. Leave **RTU disabled** at `/modbus`, and enable MQTT/Discovery at `/mqtt`. The web panel and OTA remain available. **Modbus TCP over Wi-Fi also works without MAX485** if you later choose Modbus Devices.
 
-Страница `/wifi/reset` забывает сохранённую сеть и возвращает точку первоначальной настройки, сохраняя MQTT/Modbus и пароли управления.
+<a id="первый-запуск"></a>
 
-Страница `/modbus` позволяет включать RTU/TCP, выбирать Unit ID и скорость RTU. TCP работает на порту502 через основное Wi-Fi-подключение; подключения с setup AP отклоняются. Modbus TCP не имеет аутентификации и рассчитан на доверенную локальную сеть.
+## First start
 
-## Документация
+Hardware connections: [HARDWARE.md](docs/HARDWARE.md). After flashing, join `haier-s3-<suffix>-setup` using `setup_password`, open `http://192.168.4.1` and select a 2.4 GHz network. Once the ESP has an address, open `/control`. Username: `admin`; password: `ota_password` from local `secrets.yaml` (shared by web/OTA in this version).
 
-- **[Вся система: от оборудования до Home Assistant](docs/SYSTEM.md).**
-- [Карта регистров](docs/REGISTERS.md), [CSV](docs/registers.csv), [заводские источники](docs/sources/README.md).
-- [Сборка стенда](docs/HARDWARE.md).
-- [API и подтверждение команд](docs/API.md), [MQTT](docs/MQTT.md).
-- [Журнал версий](CHANGELOG.md).
-- [Проверки и ограничения](docs/VALIDATION.md).
-- [Лицензии и происхождение](THIRD_PARTY_NOTICES.md).
+The `/wifi/reset` page forgets saved networks and returns to setup mode while retaining MQTT/Modbus settings and control passwords.
 
-## Статус
+At `/modbus`, enable RTU/TCP and choose Unit ID and RTU baud rate. TCP listens on port 502 over the main Wi-Fi connection; setup-AP connections are rejected. Modbus TCP has no authentication and is intended for a trusted local network.
 
-Рабочая версия для проверенной модели Haier AS25HSL1HRA-W и ESP32-S3 N16R8. Другие модели требуют проверки протокола и электрических уровней. Соответствие ненулевых кодов неисправности заводскому YCJ-A002 не подтверждено. Проект не заменяет защитные функции кондиционера.
+<a id="документация"></a>
+
+## Documentation
+
+- **[Complete system: hardware to Home Assistant](docs/SYSTEM.md).**
+- [Register map](docs/REGISTERS.md), [CSV](docs/registers.csv), [manufacturer sources](docs/sources/README.md).
+- [Bench hardware](docs/HARDWARE.md).
+- [API and command confirmation](docs/API.md), [MQTT](docs/MQTT.md).
+- [Changelog](CHANGELOG.md).
+- [Validation and limitations](docs/VALIDATION.md).
+- [Licenses and provenance](THIRD_PARTY_NOTICES.md).
+
+<a id="статус"></a>
+
+## Status
+
+Working release for the tested Haier AS25HSL1HRA-W and ESP32-S3 N16R8. Other models require protocol and electrical checks. Equivalence of nonzero fault codes to YCJ-A002 is unverified. The project does not replace the air conditioner's protective functions.

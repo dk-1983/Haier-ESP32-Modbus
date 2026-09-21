@@ -1,30 +1,38 @@
-# MQTT-клиент через Wi-Fi
+[English](MQTT.md) | [Русский](MQTT_RU.md)
 
-Контроллер подключается к внешнему брокеру по MQTT 3.1.1 TCP (по умолчанию порт 1883). Встроенного брокера нет. Первая версия предназначена для доверенной локальной сети: TLS не включён. Home Assistant Discovery доступен с версии 0.6.0.
+<a id="mqtt-клиент-через-wi-fi"></a>
 
-## Настройка
+# MQTT client over Wi-Fi
 
-Открыть `/mqtt`, авторизоваться `admin` и паролем управления. Указать адрес брокера (IPv4 или DNS-имя без `mqtt://`), порт, пользователя/пароль и уникальный префикс топиков. Пустое имя пользователя означает подключение без имени. По умолчанию префикс совпадает с hostname устройства.
+The controller connects to an external broker using MQTT 3.1.1 TCP (default port 1883). There is no built-in broker. This initial implementation targets trusted local networks; TLS is not enabled. Home Assistant Discovery is available since 0.6.0.
 
-MQTT выключен по умолчанию и включается независимо от RTU/TCP. Настройки хранятся в NVS. Пустое поле нового пароля сохраняет старый; отдельная галочка удаляет пароль. GET `/mqtt/config` возвращает только `password_set`, а не пароль. Смена настройки выполняется в фоне; повторная запись во время её применения возвращает HTTP409.
+<a id="настройка"></a>
 
-## Топики
+## Setup
 
-Ниже `BASE` — выбранный префикс.
+Open `/mqtt` and authenticate with `admin` and the control password. Enter the broker host (IPv4 or DNS, without `mqtt://`), port, username/password and a unique topic prefix. An empty username selects a connection without a username. The default prefix matches the device hostname.
 
-| Топик | Направление | Содержимое |
+MQTT defaults to disabled and is independent of RTU/TCP. Settings are stored in NVS. An empty new-password field keeps the current password; a separate checkbox clears it. GET `/mqtt/config` returns only `password_set`, never the password. Configuration changes apply in the background; another write during application returns HTTP409.
+
+<a id="топики"></a>
+
+## Topics
+
+`BASE` is the selected prefix.
+
+| Topic | Direction | Content |
 |---|---|---|
-| `BASE/state` | Контроллер → брокер | JSON как `/haier/status`, без `last_status_hex`, каждые 5 секунд при соединении |
-| `BASE/availability` | Контроллер → брокер | `online` / `offline`, QoS1 retained; offline также Last Will |
-| `BASE/result` | Контроллер → брокер | JSON: accepted / confirmed / timeout_unconfirmed / rejected |
-| `BASE/set/<field>` | Брокер → контроллер | Одно точное значение из таблицы ниже, без JSON |
+| `BASE/state` | Controller → broker | JSON matching `/haier/status`, excluding `last_status_hex`, every 5 seconds while connected |
+| `BASE/availability` | Controller → broker | `online` / `offline`, QoS1 retained; offline is also the Last Will |
+| `BASE/result` | Controller → broker | JSON: accepted / confirmed / timeout_unconfirmed / rejected |
+| `BASE/set/<field>` | Broker → controller | One exact value from the following table, without JSON |
 
-`availability` показывает связь контроллера с брокером. Для связи с кондиционером проверяйте `state.available` и `age_ms`. State и result публикуются без retain, QoS0: старое состояние не выдаётся новому подписчику как свежее. В обычном режиме период state — 5 секунд. Пока команда ожидает подтверждения, state приостановлен; после подтверждения или таймаута публикация возобновляется.
+`availability` describes controller-to-broker connectivity. For AC connectivity, check `state.available` and `age_ms`. State/result use QoS0 without retain, so a new subscriber is not given old state as fresh. Normal state interval is 5 seconds. State publication pauses while confirmation is pending and resumes after confirmation or timeout.
 
-| field | Значения (регистр букв важен) |
+| field | Values (case-sensitive) |
 |---|---|
 | power | OFF, ON |
-| target | Целое 16..30 |
+| target | Integer 16..30 |
 | mode | COOL, HEAT, DRY, FAN_ONLY, AUTO |
 | hvac_mode | OFF, COOL, HEAT, DRY, FAN_ONLY, AUTO |
 | fan | LOW, MEDIUM, HIGH, AUTO |
@@ -36,43 +44,49 @@ MQTT выключен по умолчанию и включается незав
 | vertical_position | HEALTH_UP, MAX_UP, HEALTH_DOWN, UP, CENTER, DOWN |
 | horizontal_position | CENTER, MAX_LEFT, LEFT, RIGHT, MAX_RIGHT |
 
-Каждая команда проходит через тот же валидатор и арбитр, что Modbus. Режим отдельно от питания: запись mode не включает выключенный кондиционер. Ограничения сочетаний функций описаны в REGISTERS.md. Пока команда не завершена, следующая запись любого интерфейса отклоняется как busy.
+Commands share the Modbus validator and arbiter. Mode is independent of power: writing mode does not turn on a powered-off AC. Combination constraints are in [REGISTERS.md](REGISTERS.md). Until a command completes, further writes from any interface are rejected as busy.
 
-Ответ `accepted` означает принятие, а не выполнение. Для принятой MQTT-команды создаётся `request_id` вида `mqtt-N`; два последующих совпадающих status-пакета дают `confirmed`. Ожидание ограничено 30 секундами. У отклонённой команды публикуются field, error (коды как Modbus) и reason. После обрыва сети result может быть потерян; проверяйте фактический state, его request_id и command_state.
+`accepted` means accepted, not executed. An accepted MQTT command receives a `request_id` such as `mqtt-N`; two subsequent matching status packets produce `confirmed`. Timeout is 30 seconds. Rejections include field, error (Modbus-compatible codes) and reason. Network loss may lose a result message; check actual state, request_id and command_state.
 
-## Пример
+<a id="пример"></a>
+
+## Example
 
 ```sh
 mosquitto_sub -h BROKER -t 'BASE/state' -t 'BASE/result' -t 'BASE/availability'
 mosquitto_pub -h BROKER -t 'BASE/set/target' -m '22' -q 0
 ```
 
-Добавьте параметры аутентификации своего брокера при необходимости. Не используйте `-r` для команд. Контроллер подписывается с QoS0 и clean session; офлайн-команды не накапливаются. Retained-пакеты, доставленные при подписке, отклоняются; DUP-пакеты также не исполняются. MQTT3.1.1 не позволяет подписчику определить retain исходной публикации при обычной живой пересылке: все отправители должны соблюдать правило «команды без retain».
+Add broker authentication as needed. Do not use `-r` for commands. The controller subscribes at QoS0 with clean session; offline commands do not accumulate. Retained packets delivered on subscription and DUP packets are rejected. MQTT 3.1.1 does not let the subscriber detect the publisher's original retain flag during ordinary live forwarding: every sender must follow the no-retained-commands rule.
 
-## Работа при сбоях
+<a id="работа-при-сбоях"></a>
 
-ESP-MQTT из закреплённого ESP-IDF выполняет сетевые операции в фоновых задачах. Главный цикл не вызывает connect/subscribe/publish/stop и продолжает обработку UART, веба и Modbus при недоступном брокере. Повторное подключение — примерно каждые 5 секунд; keepalive 30 секунд. На переподключении восстанавливаются подписка и публикация состояния.
+## Failure handling
 
-Очереди ограничены: 8 входящих команд и 4 публикации; пакет команды до 95 байт и топик до 127 байт. Неисполненная команда в очереди старше 1 секунды отклоняется. При переполнении сообщения могут быть потеряны; в `/mqtt/config` есть счётчик dropped. Это управление состоянием кондиционера, не гарантированная очередь заданий.
+ESP-MQTT from the pinned ESP-IDF performs network operations in background tasks. The main loop does not call connect/subscribe/publish/stop and continues UART, web and Modbus processing if the broker is unavailable. Reconnect is approximately every 5 seconds; keepalive is 30 seconds. Subscriptions and state publication resume on reconnect.
 
-При штатном отключении делается попытка опубликовать offline и дождаться подтверждения; при разрыве сети Last Will устанавливается брокером после обнаружения разрыва/keepalive. Уже принятая hOn-команда завершается независимо от MQTT.
+Queues are bounded: 8 incoming commands and 4 publications; command payload up to 95 bytes and topic up to 127 bytes. Queued commands older than 1 second are rejected. Overflow can lose messages; `/mqtt/config` exposes a dropped counter. This controls device state; it is not a guaranteed job queue.
 
-## Проверка
+Orderly shutdown attempts to publish offline and await acknowledgement. On connection loss, the broker publishes the Last Will after detecting failure/keepalive expiry. An already accepted hOn command completes independently of MQTT.
 
-На ESP32-S3 с реальным Haier выполнена серия из 41 команды: уставка, все скорости, блокировка, дисплей, Quiet, пресеты, качание и фиксированные положения, режимы при выключенном блоке, OFF/ON и HVAC COOL. Каждая команда получила confirmed после двух совпадающих hOn-пакетов. Retained-команда при подключении отклонена; пять Discovery-конфигураций подтверждены PUBACK.
+<a id="проверка"></a>
 
-Исправление 1.0.0: отметка поступления MQTT и вычисление возраста очереди используют один источник времени ESPHome. Смешение Arduino millis и ESPHome millis давало ложный expired_command. После исправления вся серия повторена успешно.
+## Validation
+
+A real Haier with ESP32-S3 confirmed 41 commands: setpoint, every fan speed, lock, display, Quiet, presets, swing/fixed positions, modes while off, OFF/ON and HVAC COOL. Each received confirmed after two matching hOn packets. A retained command delivered on connection was rejected; five Discovery configurations received PUBACK.
+
+The 1.0.0 fix uses the same ESPHome clock for reception timestamps and command age. Mixing Arduino millis and ESPHome millis caused false expired_command errors. The entire series passed after the fix.
 
 ## Home Assistant (0.6.0)
 
-На странице `/mqtt` есть отдельная галочка обнаружения HA. После подключения контроллер публикует пять retained Discovery-конфигураций с QoS1, последовательно ожидая PUBACK: climate, quiet, display, vertical_position, horizontal_position. При новом подключении и живом `homeassistant/status=online` цикл повторяется. `/mqtt/config.discovery_sent` показывает число подтверждённых конфигураций (0..5).
+`/mqtt` has a separate HA discovery checkbox. On connection, the controller publishes five retained QoS1 configurations, sequentially awaiting PUBACK: climate, quiet, display, vertical_position, horizontal_position. Reconnect and a live `homeassistant/status=online` repeat the cycle. `/mqtt/config.discovery_sent` counts acknowledged configurations (0..5).
 
-Discovery включён по умолчанию, MQTT по-прежнему выключен. Старые настройки NVS сохраняются: использован бывший нулевой резервный байт. Выключение Discovery останавливает публикацию конфигураций, но не удаляет уже сохранённые сущности у брокера/HA.
+Discovery defaults to enabled; MQTT still defaults to disabled. Existing NVS settings are preserved using a previously reserved zero byte. Disabling Discovery stops publication but does not remove broker-retained configurations or HA entities.
 
-Климат HA использует `hvac_mode`: OFF выключает, остальные значения атомарно выбирают режим и включают питание. FAN_ONLY также задаёт LOW, поскольку AUTO вентилятора недопустим в этом режиме. Старый топик `mode` сохраняет независимость от питания. Обычный `power=ON` сохраняет ранее выбранный режим.
+HA climate uses `hvac_mode`: OFF turns power off; other values atomically select mode and turn power on. FAN_ONLY also selects LOW because AUTO fan is invalid in that mode. The older `mode` topic preserves power independence. `power=ON` retains the previously observed mode.
 
-В список Discovery presets входят только boost/sleep; none добавляет HA. Для отсутствующего режима/вентилятора/качания шаблоны возвращают `None`. Quiet/display имеют optimistic-индикацию HA; фактическое состояние приходит с контроллера после завершения команды. Остальные сущности не optimistic. Устаревшие state в собственной очереди работника отбрасываются по поколению команды; уже отправленные по сети сообщения отозвать невозможно.
+Discovery presets list only boost/sleep; HA adds none. Missing mode/fan/swing fields yield `None` in templates. Quiet/display use optimistic HA indication; actual state arrives after command completion. Other entities are not optimistic. Old state in the worker's own queue is discarded by command generation; messages already sent over the network cannot be recalled.
 
-Проверены JSON, шаблоны Jinja, атомарное преобразование команд и доставка всех пяти Discovery с PUBACK от отдельного брокера. Интерфейс Home Assistant с этой S3 отдельно не проверялся; проверка брокера не заменяет UI-проверку HA.
+JSON, Jinja templates, atomic command conversion and delivery of all five configurations with PUBACK from a separate broker were tested. Home Assistant's UI with this S3 was not separately tested; broker validation does not replace HA UI validation.
 
-На 1.0.0 дополнительно проверено восстановление MQTT после диагностического разрыва Wi-Fi без перезапуска ESP и повторная доставка пяти Discovery. Парольная аутентификация самого брокера и принудительный перезапуск брокера отдельно в этой серии не испытывались.
+On 1.0.0, MQTT recovery after a diagnostic Wi-Fi disconnect without restarting ESP and redelivery of five Discovery configurations were also verified. Broker password authentication and forced broker restart were not separately tested in this series.

@@ -1,49 +1,51 @@
-# Два канала PC817 для UART Haier — стендовый вариант
+[English](PC817-UART-BENCH.md) | [Русский](PC817-UART-BENCH_RU.md)
 
-Статус: предложенная схема, не собрана и не проверена. 9600 8N1. Питание ESP от Haier через обычный стабилизатор означает общую землю: это оптическая передача сигналов и согласование уровней, НЕ полная гальваническая развязка плат. Перегрузка GPIO старой ESP8266 не доказана; 5 В на её GPIO не считаются допустимыми лишь потому, что обмен работал.
+# Two PC817 channels for Haier UART — bench option
 
-PC817: 1 анод, 2 катод, 3 эмиттер, 4 коллектор. Нумерацию сверить с корпусом конкретного производителя.
+Initial status: proposed, not yet assembled/validated (later bench update below). 9600 8N1. Powering ESP from Haier through an ordinary regulator shares ground: this is optical signal transfer and level conversion, NOT full galvanic isolation. Overload of the older ESP8266 GPIO was not proven; successful communication does not make 5 V acceptable on its GPIO.
 
-## U1: TX Haier -> RX ESP
+PC817: 1 anode, 2 cathode, 3 emitter, 4 collector. Verify the exact manufacturer's package numbering.
 
-```
-+5V Haier -- R1 680 Ом -- U1 pin1 (A)
+## U1: Haier TX → ESP RX
+
+```text
++5V Haier -- R1 680 ohm -- U1 pin1 (A)
 TX Haier --------------- U1 pin2 (K)
 
-+3.3V ESP -- R2 2.2 кОм --+-- RX ESP
++3.3V ESP -- R2 2.2 kohm --+-- RX ESP
                           |
                         U1 pin4 (C)
 GND ESP ---------------- U1 pin3 (E)
 ```
 
-## U2: TX ESP -> RX Haier
+## U2: ESP TX → Haier RX
 
-```
-+3.3V ESP -- R3 390 Ом -- U2 pin1 (A)
+```text
++3.3V ESP -- R3 390 ohm -- U2 pin1 (A)
 TX ESP ----------------- U2 pin2 (K)
 
-+5V Haier -- R4 4.7 кОм --+-- RX Haier
++5V Haier -- R4 4.7 kohm --+-- RX Haier
                           |
                         U2 pin4 (C)
 GND Haier -------------- U2 pin3 (E)
 ```
 
-При LOW передатчик поглощает ток LED, оптопара тянет RX вниз. При HIGH LED выключен, RX поднимается собственной подтяжкой. Оба канала НЕ инвертируют: прошивка без инверсии. ESP GPIO никогда не соединяется с выходной 5-вольтовой точкой U2.
+At LOW, the transmitter sinks LED current and the optocoupler pulls RX low. At HIGH, the LED is off and RX rises through its pull-up. Both channels are non-inverting; firmware inversion is disabled. ESP GPIO must never connect to U2's 5 V output node.
 
-Начальные номиналы для стенда: ток LED около5 мА при LOW (зависит от VF/VOL). Нагрузка коллектора U1 около1.5 мА, U2 около1 мА без учёта внутренней подтяжки Haier. Выход TX Haier должен уметь поглощать этот ток; его допустимая нагрузка и внутренняя схема ещё не установлены. Номиналы требуют проверки LOW/HIGH и формы импульсов, особенно при большом CTR и насыщении PC817. Старый делитель/стабилитрон не оставлять параллельно выходу оптопары.
+Starting bench values give about 5 mA LED current at LOW (dependent on VF/VOL). U1 collector load is about 1.5 mA, U2 about 1 mA, excluding any internal Haier pull-up. Haier TX must sink this current; its load rating/internal circuit was not established. Verify LOW/HIGH and waveforms, particularly with high CTR and PC817 saturation. Do not leave the old divider/Zener in parallel with the optocoupler output.
 
-## Стенд перед Haier
+## Bench before Haier
 
-Обе линии Haier отключены. Каждый PC817 проверить по отдельности существующим UART loopback-тестом: GPIO17 управляет его LED от3.3В через390Ом; коллектор идёт на GPIO18 с подтяжкой2.2кОм к3.3В, эмиттер на GND. Прямая перемычка17-18 убрана. Так проверяются обе оптопары с одинаковыми3.3В условиями; этот тест ещё не проверяет TX Haier и рабочие5В условия U1/U2.
+Disconnect both Haier lines. Test each PC817 separately with the UART loopback test: GPIO17 drives the LED from 3.3 V through 390 Ω; collector to GPIO18 with 2.2 kΩ pull-up to 3.3 V, emitter to GND. Remove the direct 17–18 jumper. This tests both optocouplers under identical 3.3 V conditions, not Haier TX or the final 5 V U1/U2 conditions.
 
-Не замыкать выход двухканального адаптера на его вход для сквозного теста без расчёта нагрузки: коллектор U2 тогда должен поглощать ток LED U1 плюс ток своей подтяжки. Это больше нагрузки обычного RX.
+Do not loop the adapter output into its input without a load calculation: U2's collector would sink U1 LED current plus its own pull-up current, more than a normal RX load.
 
-После отдельных PASS проверить каналы при рабочих напряжениях с подходящим5В драйвером/измерением; затем Haier. Измерять фронты предпочтительно анализатором/осциллографом. PC817 не гарантирован для произвольной схемы UART9600: паспортные времена4/3мкс тип.,18мкс макс. заданы при VCE2В, IC2мА, RL100Ом, а не для наших подтяжек. Наличие PASS локального теста не гарантирует обмен Haier.
+After individual PASS results, test at operating voltages using an appropriate 5 V driver and measurements, then Haier. Prefer a scope/analyzer for edges. PC817 is not guaranteed for an arbitrary UART9600 circuit: typical 4/3 µs, maximum 18 µs timing is specified at VCE 2 V, IC 2 mA, RL 100 Ω, not these pull-ups. A local PASS does not guarantee Haier communication.
 
-S3: TX GPIO17, RX GPIO18. ESP8266 текущего проекта: TX GPIO5(D1), RX GPIO4(D2).
+S3: TX GPIO17, RX GPIO18. Historical ESP8266 project: TX GPIO5(D1), RX GPIO4(D2).
 
-Источник: Sharp PC817XxNSZ1B, pinout/CTR/timing: https://global.sharp/products/device/lineup/data/pdf/datasheet/PC817XxNSZ1B_e.pdf
+Source: [Sharp PC817XxNSZ1B pinout/CTR/timing](https://global.sharp/products/device/lineup/data/pdf/datasheet/PC817XxNSZ1B_e.pdf).
 
-## Стенд с Arduino вместо кондиционера
+## Arduino bench instead of the AC
 
-Для проверки обоих каналов при 5/3,3 В с основной прошивкой ESP подготовлен [имитатор hOn на Nano ATmega328P](../bench/README.md). Nano D11 заменяет TX Haier, D10 — RX Haier. Это не сквозная петля оптопар: каждую LED-цепь питает самостоятельный выход микроконтроллера. Совместимый вариант оптопары — NEC PS2561-1 после сверки распиновки. Обмен на этом стенде подтверждён. Затянутые фронты ограничивают применимость оптопар; результаты и проверенные альтернативы приведены в [HARDWARE.md](HARDWARE.md).
+The [Nano ATmega328P hOn simulator](../bench/README.md) tests both channels at 5/3.3 V with the main ESP firmware. Nano D11 replaces Haier TX, D10 replaces Haier RX. Each LED circuit has its own MCU driver; this is not an optocoupler loop. NEC PS2561-1 is an alternative after pinout verification. Communication on this bench was confirmed. Slow edges limit applicability; see [HARDWARE.md](HARDWARE.md) for results and tested alternatives.

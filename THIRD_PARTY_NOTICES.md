@@ -1,3 +1,5 @@
+[English](THIRD_PARTY_NOTICES.md) | [Русский](THIRD_PARTY_NOTICES_RU.md)
+
 # Licenses and provenance
 
 This is an independent interoperability project. Haier, ESPHome, Espressif and product names identify compatible hardware/software; no affiliation or endorsement is claimed.

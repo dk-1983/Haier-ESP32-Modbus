@@ -1,73 +1,87 @@
-# Электрическая схема макета
+[English](SCHEMATIC.md) | [Русский](SCHEMATIC_RU.md)
 
-![Схема Haier ESP32-S3 и MAX485](assets/haier-s3-schematic.png)
+<a id="электрическая-схема-макета"></a>
 
-[Векторная схема SVG](assets/haier-s3-schematic.svg) · [PNG](assets/haier-s3-schematic.png)
+# Prototype electrical schematic
 
-Перечерчено по рисунку автора с уточнениями от 21.09.2026. Это схема проверенного макета с документированными дополнениями, не готовая PCB. Обозначения выводов сверены с прошивкой `haier-s3.yaml` и документацией изготовителей. Реальную маркировку припаянных деталей и ESR конденсаторов по рисунку установить нельзя.
+![Haier ESP32-S3 and MAX485 schematic](assets/haier-s3-schematic-en.png)
 
-## Сборка для MQTT без RS-485
+[Vector SVG](assets/haier-s3-schematic-en.svg) · [PNG](assets/haier-s3-schematic-en.png)
 
-**Если нужен Home Assistant через MQTT, часть схемы «03 RS-485» можно не собирать.** Не устанавливайте **U3 (MAX485), R4, R5, R6**, локальный конденсатор питания MAX485 и разъём A/B. Соединения этого узла с GPIO15, GPIO16 и GPIO21 не нужны.
+Redrawn from the author's sketch with clarifications dated 2026-09-21. This documents the tested prototype and identified additions, not a finished PCB. Pin labels were checked against `haier-s3.yaml` and manufacturer documentation. Actual installed part markings and capacitor ESR cannot be established from the drawing.
 
-Остаются ESP32-S3, питание, цепи EN/BOOT и UART Haier: **GPIO17 → RX Haier**, **TX Haier → делитель R2/R3 → GPIO18**, общая земля. **R2 и R3 обязательно сохраняются** — это согласование входа от кондиционера, а не часть RS-485.
+<a id="сборка-для-mqtt-без-rs-485"></a>
 
-Используется та же основная прошивка `haier-s3.yaml`; отдельная сборка не нужна. На `/modbus` оставьте **RTU выключенным**, на `/mqtt` включите MQTT и Discovery. Веб-пульт и OTA остаются доступны. **Modbus TCP по Wi-Fi также работает без MAX485**, если позже понадобится подключение через Modbus Devices.
+## MQTT build without RS-485
 
-## Проверка выводов
+**For Home Assistant over MQTT, omit the “03 RS-485” section if desired.** Leave out **U3 (MAX485), R4, R5, R6**, the local MAX485 supply capacitor and A/B connector. Connections to GPIO15, GPIO16 and GPIO21 are unnecessary.
 
-| Цепь | GPIO ESP32-S3 | Площадка WROOM-1 | Другой конец |
+Keep ESP32-S3, power, EN/BOOT and Haier UART: **GPIO17 → Haier RX**, **Haier TX → R2/R3 divider → GPIO18**, common ground. **Keep R2 and R3**: these convert the AC signal, not RS-485.
+
+Use the same `haier-s3.yaml` firmware. Leave **RTU disabled** at `/modbus` and enable MQTT/Discovery at `/mqtt`. Web control and OTA remain available. **Modbus TCP over Wi-Fi works without MAX485** as well.
+
+<a id="проверка-выводов"></a>
+
+## Pin verification
+
+| Circuit | ESP32-S3 GPIO | WROOM-1 pad | Other end |
 |---|---|---|---|
-| Haier TX контроллера | 17 | 10 | RX Haier, напрямую |
-| Haier RX контроллера | 18 | 11 | TX Haier через R2/R3 |
-| RS-485 TX контроллера | 15 | 8 | MAX485 DI, вывод 4 |
-| RS-485 RX контроллера | 16 | 9 | MAX485 RO, вывод 1, через R4/R5 |
-| Направление RS-485 | 21 | 23 | MAX485 DE (3) и /RE (2) вместе |
-| UART0 TX | 43 | 37 | RX программатора, логика 3,3 В |
-| UART0 RX | 44 | 36 | TX программатора, логика 3,3 В |
-| BOOT | 0 | 27 | SB1 на GND при включении питания |
-| EN | — | 3 | R1 10 кОм к 3,3 В |
-| Питание | — | 2 | 3,3 В |
-| Земля | — | 1, 40, 41 | Общая GND, включая центральную площадку |
+| Controller Haier TX | 17 | 10 | Haier RX, direct |
+| Controller Haier RX | 18 | 11 | Haier TX through R2/R3 |
+| Controller RS-485 TX | 15 | 8 | MAX485 DI, pin 4 |
+| Controller RS-485 RX | 16 | 9 | MAX485 RO, pin 1, through R4/R5 |
+| RS-485 direction | 21 | 23 | MAX485 DE (3) and /RE (2) together |
+| UART0 TX | 43 | 37 | Programmer RX, 3.3 V logic |
+| UART0 RX | 44 | 36 | Programmer TX, 3.3 V logic |
+| BOOT | 0 | 27 | SB1 to GND at power-up |
+| EN | — | 3 | R1 10 kΩ to 3.3 V |
+| Supply | — | 2 | 3.3 V |
+| Ground | — | 1, 40, 41 | Common GND, including center pad |
 
-MAX485 DIP/SO: **1 RO, 2 /RE, 3 DE, 4 DI, 5 GND, 6 A, 7 B, 8 VCC**. Обведённый на исходном рисунке номер 23 — площадка GPIO21, а не GPIO23. RO подключается к GPIO16; GPIO18 занят отдельным UART Haier. Все номера на символах — номера выводов компонентов, а не порядок контактов внешнего разъёма Haier.
+MAX485 DIP/SO: **1 RO, 2 /RE, 3 DE, 4 DI, 5 GND, 6 A, 7 B, 8 VCC**. The circled 23 in the sketch is the GPIO21 module pad, not GPIO23. RO connects to GPIO16; GPIO18 belongs to the separate Haier UART. Symbol numbers identify component pins, not the external Haier connector order.
 
-## Номиналы и питание
+<a id="номиналы-и-питание"></a>
 
-| Деталь | Значение | Основание |
+## Values and power
+
+| Part | Value | Basis |
 |---|---|---|
-| U1 | ESP32-S3-WROOM-1 N16R8 | Целевой модуль проекта |
-| U2 | LM1117-3.3, фиксированные 3,3 В | Обозначение на рисунке; корпус/маркировку сверить перед PCB |
-| U3 | MAX485, питание 5 В | Проверенный интерфейс |
-| R1 | 10 кОм | Подтяжка EN |
-| R2, R4 | 10 кОм | От источника сигнала к RX |
-| R3, R5 | 20 кОм | От RX к GND |
-| R6 | 10 кОм | Подтяжка DIR к GND из документации проекта; на фото отсутствует |
-| C1 | 220 мкФ / 10 В | По рисунку |
-| C2, C4 | 0,1 мкФ | C4 уточнён автором |
-| C3 | 100 мкФ / 10 В | По рисунку; тип и ESR требуют проверки |
-| SB1 | Кнопка без фиксации, нормально разомкнутая | BOOT / PGM |
+| U1 | ESP32-S3-WROOM-1 N16R8 | Project target |
+| U2 | LM1117-3.3, fixed 3.3 V | Sketch marking; verify package/marking before PCB design |
+| U3 | MAX485, 5 V supply | Tested interface |
+| R1 | 10 kΩ | EN pull-up |
+| R2, R4 | 10 kΩ | Signal source to RX |
+| R3, R5 | 20 kΩ | RX to GND |
+| R6 | 10 kΩ | DIR pull-down from project documentation; absent in photo |
+| C1 | 220 µF / 10 V | Sketch |
+| C2, C4 | 0.1 µF | C4 clarified by author |
+| C3 | 100 µF / 10 V | Sketch; type and ESR require verification |
+| SB1 | Normally-open momentary button | BOOT / PGM |
 
-У LM1117-3.3 в SOT-223: **1 GND, 2 OUT, 3 IN; TAB также OUT**. Теплоотвод нельзя соединять с землёй. Для других корпусов нужна их распиновка. По TI для выходного конденсатора указаны минимум 10 мкФ (тантал) и ESR 0,3–22 Ом. Поэтому 100 мкФ по величине достаточно, но без типа/серии конденсатора нельзя подтвердить устойчивость. C4 100 нФ не заменяет C3. Другой изготовитель 1117 может задавать другие требования.
+LM1117-3.3 SOT-223: **1 GND, 2 OUT, 3 IN; TAB is also OUT**. Do not ground the tab. Other packages require their own pinout. TI specifies at least 10 µF (tantalum) on the output and ESR 0.3–22 Ω. Thus 100 µF is sufficient in capacitance, but stability cannot be confirmed without the capacitor type/series. C4 100 nF does not replace C3. Other 1117 manufacturers may have different requirements.
 
-Питание MAX485 по даташиту — 4,75–5,25 В. Его DI, DE и /RE распознают высокий уровень от 2 В: дополнительный каскад повышения 3,3 → 5 В для этих входов не требуется. RO относится к 5-вольтовой стороне, поэтому прямой провод на ESP заменён делителем.
+MAX485 supply specification is 4.75–5.25 V. DI, DE and /RE accept HIGH from 2 V, so no extra 3.3 → 5 V drive stage is needed for these inputs. RO is on the 5 V side, so its direct ESP connection is replaced with a divider.
 
-Для обоих делителей `V_RX = V_source × 20 / (10 + 20)`: при 5,0 В получается 3,33 В. Это номинальный расчёт, не стабилизатор. Проверяют максимальный уровень и допуски, а также минимальный HIGH на принимающем GPIO. В частности, гарантированный MAX485 VOH при указанной в даташите нагрузке — 3,5 В; после делителя это 2,33 В. Стенд с лёгкой нагрузкой работал, но это не доказывает гарантированный запас по всем экземплярам и температурам. Для серийной платы следует рассмотреть 3,3-вольтовый трансивер либо буфер с 5-вольтным допустимым входом.
+Both dividers use `V_RX = V_source × 20 / (10 + 20)`: 5.0 V gives 3.33 V. This is a nominal calculation, not regulation. Verify maximum voltage/tolerances and minimum HIGH at the receiving GPIO. MAX485's guaranteed VOH at its specified load is 3.5 V, or 2.33 V after the divider. The lightly loaded bench worked, but this does not guarantee margin over all parts/temperatures. Consider a 3.3 V transceiver or a buffer with a 5 V-tolerant input for production.
 
-## Что дополнено и что остаётся для PCB
+<a id="что-дополнено-и-что-остаётся-для-pcb"></a>
 
-- На RO MAX485 восстановлен пропущенный в рисунке делитель R4/R5, подтверждённый автором и стендом.
-- R6 показан отдельно как предусмотренная аппаратная подтяжка направления; наличие на макете не установлено по фото.
-- У MAX485 нужен локальный конденсатор 100 нФ между 8 и 5, рядом с корпусом. Он указан в примечании, а не выдан за установленную деталь.
-- Для EN следует предусмотреть задержку запуска согласно Espressif (типовой RC 10 кОм / 1 мкФ); на исходном рисунке показан только R1. Разводку питания и нагрев LM1117 проверить при пиковом потреблении Wi-Fi. При 0,5 А и входных 5 В расчётное рассеяние — 0,85 Вт.
-- Терминация и смещение RS-485 зависят от линии и уже установленных резисторов шлюза; на этой схеме они не заданы.
-- Возврат питания Haier обозначен GND, не «−5 В». Схема имеет общую землю и не обеспечивает гальваническую развязку.
+## Additions and remaining PCB work
 
-## Первичные источники
+- Restored the missing MAX485 RO divider R4/R5, confirmed by the author and bench.
+- R6 is shown as the intended hardware direction pull-down; the photo does not establish its installation.
+- Add a local 100 nF capacitor between MAX485 pins 8 and 5, close to the package. It is noted rather than claimed to be installed.
+- Provide EN startup delay according to Espressif (typical RC: 10 kΩ / 1 µF); the sketch contains only R1. Check power routing and LM1117 heating during Wi-Fi peaks. At 0.5 A with 5 V input, calculated dissipation is 0.85 W.
+- RS-485 termination/biasing depends on the line and existing gateway resistors; it is not specified here.
+- Haier supply return is GND, not “−5 V”. Grounds are shared; this circuit does not provide galvanic isolation.
 
-- [Espressif ESP32-S3-WROOM-1/1U — распиновка модуля](https://documentation.espressif.com/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf).
-- [Espressif — питание и EN](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html).
-- [Analog Devices / Maxim — MAX485, выводы и электрические характеристики](https://www.analog.com/media/en/technical-documentation/data-sheets/MAX1487-MAX491.pdf).
-- [Texas Instruments — LM1117, выводы и выходные конденсаторы](https://www.ti.com/lit/ds/symlink/lm1117.pdf).
+<a id="первичные-источники"></a>
 
-Схема нарисована в SVG; PNG — её растровая копия. Генератор: `tools/draw_schematic.py` (для PNG требуется `resvg-py`).
+## Primary sources
+
+- [Espressif ESP32-S3-WROOM-1/1U — module pins](https://documentation.espressif.com/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf).
+- [Espressif — power and EN](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html).
+- [Analog Devices / Maxim — MAX485 pins and electrical specifications](https://www.analog.com/media/en/technical-documentation/data-sheets/MAX1487-MAX491.pdf).
+- [Texas Instruments — LM1117 pins and output capacitors](https://www.ti.com/lit/ds/symlink/lm1117.pdf).
+
+The schematic is SVG, with PNG previews. Generator: `tools/draw_schematic.py` (PNG rendering requires `resvg-py`).

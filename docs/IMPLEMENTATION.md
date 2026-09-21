@@ -1,13 +1,15 @@
-# Устройство программы
+[English](IMPLEMENTATION.md) | [Русский](IMPLEMENTATION_RU.md)
 
-`haier-s3.yaml` задаёт два аппаратных UART, PSRAM и локальные компоненты. UART0 остаётся для загрузчика/логов.
+# Software architecture
 
-`fourvrs_portal` владеет Wi-Fi, настройкой сети, WebServer и ArduinoOTA. Отдельный компонент ESPHome wifi не включается: два владельца радио конфликтовали бы. Python-конфигурация явно включает Arduino-библиотеки, SoftAP/DHCP и зависимости OTA.
+`haier-s3.yaml` defines two hardware UARTs, PSRAM and local components. UART0 remains reserved for the bootloader/logs.
 
-`modbus_core.h` разбирает ограниченные по размеру PDU/ADU без динамического выделения памяти. `register_model.h` проверяет весь пакет изменений до вызова аппаратного кода. `modbus_bridge.cpp` обслуживает RTU, два TCP-клиента, настройки и привязку регистров к телеметрии.
+`fourvrs_portal` owns Wi-Fi, network setup, WebServer and ArduinoOTA. The ESPHome wifi component is not enabled: two radio owners would conflict. Python configuration explicitly enables Arduino libraries, SoftAP/DHCP and OTA dependencies.
 
-Все интерфейсы используют общий флаг ожидающей команды. Положительный Modbus-ответ подтверждает приём, два последующих совпадающих status-пакета подтверждают состояние. Незавершённые команды завершаются по тайм-ауту через 30 секунд. Чтение использует исходные status-поля, а не оптимистичные свойства ClimateCall.
+`modbus_core.h` parses bounded PDU/ADU buffers without dynamic allocation. `register_model.h` validates the complete change set before hardware calls. `modbus_bridge.cpp` handles RTU, two TCP clients, settings and telemetry/register mapping.
 
-Компонент Haier сохранён из ESPHome. Локальные изменения: запрет автоматических действий в MONITOR_ONLY и применение валидированных полей Modbus после существующего кодировщика SET_GROUP_PARAMETERS. `bridge_control.h` сохраняет независимость режима и питания, а также обеспечивает запись нескольких полей независимо от предыдущего режима. Протокол hOn заново не реализован.
+All interfaces share a pending-command flag. A positive Modbus response acknowledges acceptance; two subsequent matching status packets confirm state. Unconfirmed commands time out after 30 seconds. Reads use received status fields, not optimistic ClimateCall properties.
 
-Формат status в этой конфигурации: 2 байта подкоманды, 10 байт control, 18 байт sensors и 4 дополнительных байта; копирование ограничено размером структуры sensors; status_message_header_size=0. Для другой модели формат следует подтвердить до использования.
+The Haier component is retained from ESPHome. Local changes prevent automatic actions in MONITOR_ONLY and apply validated Modbus fields after the existing SET_GROUP_PARAMETERS encoder. `bridge_control.h` preserves independent mode/power and enables multi-field writes regardless of the previous mode. hOn was not reimplemented.
+
+Configured status format: 2 subcommand bytes, 10 control bytes, 18 sensor bytes and 4 extra bytes; copying is bounded by the sensor structure size; status_message_header_size=0. Verify the format before using another model.

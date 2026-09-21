@@ -1,37 +1,45 @@
-# HTTP и управление
+[English](API.md) | [Русский](API_RU.md)
 
-- GET `/`: текущее состояние и ссылки.
-- GET `/health`: версия/память/Wi-Fi/OTA/uptime.
-- GET `/haier/status`: свежее состояние, число status, возраст, command_state и request_id.
-- GET `/control`: основной пульт; HTTP Basic `admin`/`ota_password`.
-- GET `/haier/test-token`: токен текущего запуска, с авторизацией.
-- POST `/haier/control`: token, request_id и target/mode/fan/swing/preset; исходные проверенные функции.
-- POST `/haier/extended`: token, request_id и ровно одно quiet/display=ON|OFF или vertical_position/horizontal_position с именем из пульта.
-- GET `/modbus`: независимые переключатели RTU/TCP, адрес и скорость.
-- GET `/modbus/config`: конфигурация; авторизация обязательна.
-- POST `/modbus/config`: token, rtu=0|1, tcp=0|1, unit=1..247, baud=9600|19200|38400|57600|115200. Настройки сохраняются в NVS. Запрос во время незавершённой команды возвращает409.
-- `/wifi`, `/scan`, `/network`: настройка только со стороны setup AP.
+<a id="http-и-управление"></a>
 
-Оба Modbus-транспорта выключены после чистой первой прошивки. Изменение их настроек не отключает Wi-Fi, веб-пульт или OTA. Отключение TCP закрывает слушатель и клиентов; отключение RTU прекращает ответы и сбрасывает буфер при применении конфигурации.
+# HTTP and control
 
-HTTP202 означает приём, `command_state=confirmed` — два совпадающих ответа Haier. Общий арбитр не допускает одновременно несколько команд из веба/RTU/TCP. Последний HTTP request_id повторно не отправляет команду; перезапуск очищает эту защиту. Modbus не имеет HTTP request_id и долговременной дедупликации.
+- GET `/`: current state and links.
+- GET `/health`: version/memory/Wi-Fi/OTA/uptime.
+- GET `/haier/status`: fresh state, status count, age, command_state and request_id.
+- GET `/control`: main panel; HTTP Basic `admin`/`ota_password`.
+- GET `/haier/test-token`: current-boot token, authenticated.
+- POST `/haier/control`: token, request_id and target/mode/fan/swing/preset; original validated controls.
+- POST `/haier/extended`: token, request_id and exactly one quiet/display=ON|OFF or vertical_position/horizontal_position using a panel enum name.
+- GET `/modbus`: independent RTU/TCP switches, address and baud rate.
+- GET `/modbus/config`: configuration; authentication required.
+- POST `/modbus/config`: token, rtu=0|1, tcp=0|1, unit=1..247, baud=9600|19200|38400|57600|115200. Saved in NVS. Returns 409 while a command is pending.
+- `/wifi`, `/scan`, `/network`: setup via the setup AP (see 0.6.0 additions below for `/wifi` on LAN).
 
-OTA: ArduinoOTA UDP8266, пароль из локального secrets.yaml. Для ESP32 используйте espota.py из закреплённого Arduino-ESP32 framework: версия3.3.9 использует свой поддерживаемый механизм аутентификации. Образы ESP8266 несовместимы. Автоматический rollback без отдельной настройки и проверки не обещается.
+Both Modbus transports are disabled after a clean first flash. Changes do not disable Wi-Fi, web control or OTA. Disabling TCP closes the listener and clients; disabling RTU stops replies and clears its buffer when applied.
 
-MQTT: GET `/mqtt` — настройки; GET `/mqtt/config` — конфигурация и диагностика без пароля; POST `/mqtt/config` — token, enabled, host, port, username, password, clear_password и prefix. Все маршруты требуют Basic-аутентификации. Поля и семантика описаны в MQTT.md.
+HTTP202 means accepted; `command_state=confirmed` means two matching Haier replies. The common arbiter prevents simultaneous web/RTU/TCP commands. Reusing the last HTTP request_id does not send the command again; reboot clears this protection. Modbus has no HTTP request_id or persistent deduplication.
 
-## Сброс Wi-Fi
+OTA: ArduinoOTA UDP8266, password from local secrets.yaml. For ESP32 use espota.py from the pinned Arduino-ESP32 framework: 3.3.9 uses its supported authentication mechanism. ESP8266 images are incompatible. Automatic rollback is not promised without separate setup and validation.
 
-GET `/wifi/reset` — страница с подтверждением, доступная через основную LAN и setup AP после Basic-аутентификации. POST `/wifi/reset` требует `token` текущего запуска и `confirm=RESET_WIFI`. Сброс удаляет обе Wi-Fi записи (основную и кандидата), затем отключает STA и открывает `<hostname>-setup` на `192.168.4.1`. Пароль AP берётся из исходного secrets.yaml и не меняется. Это сброс сети, а не стирание всей конфигурации: MQTT/Modbus и пароль управления сохраняются.
+MQTT: GET `/mqtt` settings; GET `/mqtt/config` configuration/diagnostics without password; POST `/mqtt/config` fields token, enabled, host, port, username, password, clear_password and prefix. All routes require Basic authentication. See [MQTT.md](MQTT.md).
 
-Успех: HTTP202. Во время незавершённой команды, сканирования, применения новой сети или уже запущенного сброса — HTTP409; при ошибке сохранения — HTTP503. Отключение от сети отложено на 750 мс, чтобы браузер получил ответ. Перезапуск модуля не требуется. Если обычная сеть уже недоступна, существующий механизм восстановления сам открывает setup AP примерно через 60 секунд.
+<a id="сброс-wi-fi"></a>
 
-Сброс сохранённых сетей не входит в приёмочные испытания на рабочем кондиционере. Восстановление сохранённого Wi-Fi после OTA подтверждено; это другая операция.
+## Wi-Fi reset
 
-## Дополнения 0.6.0
+GET `/wifi/reset` serves an authenticated confirmation page on the main LAN and setup AP. POST requires the current-boot `token` and `confirm=RESET_WIFI`. It deletes both Wi-Fi records (active and candidate), disconnects STA and opens `<hostname>-setup` at `192.168.4.1`. The AP password remains from the original secrets.yaml. MQTT/Modbus settings and control passwords are preserved; this is a network reset, not a full configuration wipe.
 
-`POST /haier/control`: отдельный параметр `power=ON|OFF` вместе с token и request_id, без других настроек. ON восстанавливает режим из свежего hOn-пакета; OFF выключает. Действуют общая авторизация, арбитр и подтверждение двумя пакетами.
+Success: HTTP202. Pending command, scan, network application or an existing reset: HTTP409. Save failure: HTTP503. Disconnect is delayed 750 ms so the browser can receive the response. No reboot is needed. If the normal network is unavailable, existing recovery opens the setup AP after about 60 seconds.
 
-`GET /about` — защищённая страница диагностики; `/wifi` в LAN показывает состояние сети, в setup AP — настройку. `/health` добавляет min_heap, max_block, fragmentation (приблизительное отношение крупнейшего блока к общему свободному heap), psram_size, free_psram, flash_size; значения памяти в байтах.
+Saved-network reset was not part of acceptance testing on the operating AC. Saved Wi-Fi recovery after OTA was verified; that is a different operation.
 
-`/mqtt/config` добавляет discovery (POST 0/1, GET boolean) и discovery_sent (GET число PUBACK 0..5). Отсутствие discovery в старом POST сохраняет настройку.
+<a id="дополнения-060"></a>
+
+## 0.6.0 additions
+
+`POST /haier/control`: standalone `power=ON|OFF`, with token and request_id and no other settings. ON restores the mode from fresh hOn status; OFF turns power off. Shared authentication, arbiter and two-packet confirmation apply.
+
+`GET /about` is an authenticated diagnostic page. `/wifi` shows network status on LAN and configuration on the setup AP. `/health` adds min_heap, max_block, fragmentation (an approximate largest-block/free-heap relationship), psram_size, free_psram and flash_size; memory values are bytes.
+
+`/mqtt/config` adds discovery (POST 0/1, GET boolean) and discovery_sent (GET PUBACK count 0..5). Omitting discovery from older POST requests preserves its value.

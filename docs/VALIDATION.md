@@ -1,71 +1,91 @@
-# Проверки 1.0.0
+[English](VALIDATION.md) | [Русский](VALIDATION_RU.md)
 
-Целевая платформа: ESP32-S3-WROOM-1 N16R8. Кондиционер: Haier AS25HSL1HRA-W. Дата испытаний: 2026-09-21. Перед релизом команды проверялись на 0.6.8; 1.0.0 также исправляет единый источник времени MQTT; после установки MQTT-серия повторена полностью и успешно.
+<a id="проверки-100"></a>
 
-## Программные проверки
+# Version 1.0.0 validation
 
-- `python tools/test_host.py`: преобразование MQTT/Modbus в поля hOn, атомарность записи, FC01/03/04/05/06/15/16, исключения, RTU CRC/broadcast, MBAP/фрагментация, 50 000 некорректных PDU и защита границ буферов.
-- Проверка `status_sensors.h`: защитные байты вокруг структуры, null, укороченные и расширенные пакеты. Четыре дополнительных байта ответа больше не перезаписывают соседние объекты.
-- `python tests/test_discovery.py`: пять JSON Discovery, шаблоны Jinja, отсутствие `none` в передаваемом списке presets, пустые значения и ограничение размера пакета.
-- `python tools/test_hon_simulator.py`: 2000 обменов с кодеком установленного HaierProtocol, CRC, испорченные кадры, восстановление и тайм-ауты.
-- Сборка ESPHome 2026.6.5 / Arduino-ESP32 3.3.9 для 16 МБ Flash и 8 МБ PSRAM: SUCCESS.
+Target: ESP32-S3-WROOM-1 N16R8. AC: Haier AS25HSL1HRA-W. Test date: 2026-09-21. Pre-release commands were tested on 0.6.8; 1.0.0 also fixes the MQTT clock source. The full MQTT series was repeated successfully after installation.
 
-## Реальный Haier: HTTP и Modbus TCP
+<a id="программные-проверки"></a>
 
-Каждая принятая команда подтверждалась двумя новыми совпадающими status-пакетами. HTTP202 или Modbus echo отдельно успехом не считались. Исходная конфигурация сохранена перед тестами и восстановлена после серии.
+## Software checks
 
-| Функция | Проверено |
+- `python tools/test_host.py`: MQTT/Modbus-to-hOn mapping, atomic writes, FC01/03/04/05/06/15/16, exceptions, RTU CRC/broadcast, MBAP/fragmentation, 50,000 malformed PDUs and buffer boundaries.
+- `status_sensors.h`: guard bytes, null, short and extended packets. Four extra response bytes no longer overwrite adjacent objects.
+- `python tests/test_discovery.py`: five Discovery JSON definitions, Jinja templates, no `none` in published preset lists, missing values and packet size limits.
+- `python tools/test_hon_simulator.py`: 2000 exchanges using the installed HaierProtocol codec, CRC, corrupt frames, recovery and timeouts.
+- ESPHome 2026.6.5 / Arduino-ESP32 3.3.9 build for 16 MB Flash and 8 MB PSRAM: SUCCESS.
+
+<a id="реальный-haier-http-и-modbus-tcp"></a>
+
+## Real Haier: HTTP and Modbus TCP
+
+Every accepted command was confirmed by two new matching status packets. HTTP202 or Modbus echo alone did not count as success. Original settings were saved and restored after the series.
+
+| Function | Coverage |
 |---|---|
-| Уставка | изменение, возврат; границы 16/30 при выключенном блоке |
-| Вентилятор | LOW / MEDIUM / HIGH / AUTO |
-| Жалюзи | OFF / VERTICAL / HORIZONTAL / BOTH |
-| Вертикальные положения | HEALTH_UP / MAX_UP / HEALTH_DOWN / UP / CENTER / DOWN |
-| Горизонтальные положения | MAX_LEFT / LEFT / CENTER / RIGHT / MAX_RIGHT |
-| Пресеты | BOOST / SLEEP / NONE |
-| Quiet, дисплей | ON / OFF |
-| Питание | OFF, пауза не менее 180 секунд, ON; возврат COOL |
-| Режимы | запись COOL / HEAT / DRY / FAN_ONLY / AUTO при выключенном блоке |
-| Блокировка | LOCK / UNLOCK и нормализация кодов 2/3; подтверждение бита hOn |
-| Modbus чтение | FC01, FC03, FC04 |
-| Modbus запись | FC05, FC06, FC15, FC16 с подтверждением hOn |
-| Ошибки | недопустимая уставка, адрес, неподдерживаемая функция отклонены |
+| Setpoint | Change/restore; 16/30 boundaries with power off |
+| Fan | LOW / MEDIUM / HIGH / AUTO |
+| Swing | OFF / VERTICAL / HORIZONTAL / BOTH |
+| Vertical positions | HEALTH_UP / MAX_UP / HEALTH_DOWN / UP / CENTER / DOWN |
+| Horizontal positions | MAX_LEFT / LEFT / CENTER / RIGHT / MAX_RIGHT |
+| Presets | BOOST / SLEEP / NONE |
+| Quiet, display | ON / OFF |
+| Power | OFF, at least 180-second pause, ON; restore COOL |
+| Modes | Write COOL / HEAT / DRY / FAN_ONLY / AUTO while off |
+| Lock | LOCK / UNLOCK, codes 2/3 normalization; hOn bit confirmed |
+| Modbus reads | FC01, FC03, FC04 |
+| Modbus writes | FC05, FC06, FC15, FC16 with hOn confirmation |
+| Errors | Invalid setpoint/address/unsupported function rejected |
 
-Режимы проверялись без запуска нагрева серверной. Это проверка записи и обратного чтения режима, не испытание тепловой производительности каждого режима. Подтверждение lock-бита не заменяет проверку поведения физического ИК-пульта.
+Modes were tested without heating the server room. This validates mode writes/readback, not thermal performance in each mode. A confirmed lock bit does not replace testing the physical IR remote's behavior.
 
-## Стенд электрических интерфейсов
+<a id="стенд-электрических-интерфейсов"></a>
 
-- UART GPIO17/18: петля PASS, снятие перемычки FAIL, восстановление контакта PASS, 9600 8N1.
-- Эмулятор Haier на Arduino Nano ATmega328P: обмен и команды питания/уставки/вентилятора.
-- RS-485: MAX485, GPIO15 DI, GPIO16 RO через согласование уровня, GPIO21 DE+/RE. Чтение через [4VRS Gateway для Moxa](https://github.com/dk-1983/moxa-4vrs-gateway) (UC-7420-LX Plus, Modbus TCP → RTU) и [Modbus Devices для Home Assistant](https://github.com/dk-1983/Modbus_Devices) с профилем YCJ-A002 при 19200 8N1 подтверждено.
-- Оптопары общего назначения создавали затянутые фронты; на DI MAX485 прямое управление устранило искажения. Резистивное согласование RO проверено осциллографом.
-- После удаления стенда RS-485 физические RTU-записи на реальном кондиционере не повторялись. Программное ядро общее с TCP, однако это не отдельное аппаратное доказательство RTU-записи.
+## Electrical interface bench
 
-## Границы проверки
+- GPIO17/18 UART: loopback PASS, jumper removed FAIL, contact restored PASS, 9600 8N1.
+- Arduino Nano ATmega328P Haier simulator: communication and power/setpoint/fan commands.
+- RS-485: MAX485, GPIO15 DI, GPIO16 RO through level conversion, GPIO21 DE+/RE. Reads through [4VRS Gateway for Moxa](https://github.com/dk-1983/moxa-4vrs-gateway) (UC-7420-LX Plus, Modbus TCP → RTU) and [Modbus Devices for Home Assistant](https://github.com/dk-1983/Modbus_Devices), YCJ-A002 profile, confirmed at 19200 8N1.
+- General-purpose optocouplers caused slow edges; direct MAX485 DI drive removed distortion. RO resistor level conversion was checked with an oscilloscope.
+- After dismantling the RS-485 bench, physical RTU writes were not repeated on the real AC. RTU shares the TCP software core, but this is not independent hardware proof of RTU writes.
 
-Не заявляются: нулевая вероятность ошибок, совместимость со всеми Haier, соответствие ненулевых fault-кодов YCJ-A002, промышленная электромагнитная устойчивость, законченная гальваническая развязка и длительный ресурсный прогон. Принудительный обрыв проводов кондиционера и сброс Wi-Fi в рабочей серверной в эту серию не входят. Устройства ESP8266 отдельно ранее испытаны, но их результаты не подменяют тесты S3.
+<a id="границы-проверки"></a>
 
-Сырые логи, адреса стенда, пароли и образы с индивидуальными паролями не входят в публичный релиз.
+## Validation boundaries
 
-## Повторяемая проверка HTTP
+No claims of zero errors, compatibility with all Haier units, YCJ-A002 equivalence of nonzero fault codes, industrial EMC, finished galvanic isolation or long-duration endurance. Forced AC wire disconnection and Wi-Fi reset in the operating server room were not included. Earlier ESP8266 results do not replace S3 tests.
+
+Raw logs, bench addresses, passwords and images with individual credentials are excluded from the public release.
+
+<a id="повторяемая-проверка-http"></a>
+
+## Repeatable HTTP test
 
 `python tools/hil_controls.py --url http://DEVICE_IP --mac EXPECTED_MAC --log work/hil.jsonl --execute`
 
-Пароль вводится интерактивно. Скрипт требует включённое охлаждение, сохраняет исходное состояние, проверяет команды последовательно и восстанавливает настройки даже при ошибке. При неудачном восстановлении возвращает ошибку. Это реальное управление кондиционером, а не симуляция; запускать только при подходящих условиях эксплуатации. Лог хранить локально.
+The password is entered interactively. The script requires active cooling, saves the original state, tests sequentially and restores settings even after an error. Failed restoration returns an error. This controls real equipment, not a simulator; run only under suitable operating conditions. Keep logs local.
 
-## MQTT и OTA на 1.0.0
+<a id="mqtt-и-ota-на-100"></a>
 
-- 41 MQTT-команда подтверждена реальным Haier, включая OFF/ON и все доступные группы настроек. Пять Discovery получили PUBACK; retained-команда при подписке отклонена без изменения уставки.
-- При первом прогоне 0.6.8 обнаружен ложный expired_command: приёмник использовал Arduino millis, основной цикл — ESPHome millis. В 1.0.0 обе стороны используют ESPHome millis. Полный повтор прошёл без этой ошибки.
-- Полный образ 1.0.0 передан ArduinoOTA; после перезапуска проверены версия, совпадение MD5 с локальным образом, сохранение Wi-Fi, 8 МБ PSRAM и восстановление свежих hOn-пакетов.
-- Проверка MQTT выполнена с отдельным тестовым брокером. Реальный интерфейс Home Assistant для этой S3 не включён в серию.
+## MQTT and OTA on 1.0.0
 
-## Восстановление и защита API на 1.0.0
+- 41 MQTT commands confirmed by real Haier, including OFF/ON and all available setting groups. Five Discovery configurations received PUBACK; a retained command delivered on subscription was rejected without changing the setpoint.
+- The initial 0.6.8 run exposed false expired_command: receiver used Arduino millis, main loop used ESPHome millis. Both use ESPHome millis in 1.0.0; the complete repeat passed.
+- Full 1.0.0 image uploaded through ArduinoOTA. After restart: version, MD5 match to local image, saved Wi-Fi, 8 MB PSRAM and fresh hOn recovery checked.
+- MQTT used a separate test broker. Actual Home Assistant UI for this S3 was not included.
 
-Авторизация HTTP401, неверный токен403, неверное значение400, повторный request_id без повторной команды и конфликтующая запись409 проверены на устройстве. Основные веб-страницы отвечают200. После диагностического разрыва Wi-Fi контроллер восстановил сеть и MQTT, повторил пять Discovery с PUBACK; uptime продолжился, новые status-пакеты Haier поступали. Настройки MQTT/Modbus после тестов возвращены к исходным выключенным транспортам; кондиционер оставлен включённым в COOL, 22 °C, AUTO, NONE, Quiet OFF, дисплей ON, жалюзи OFF/CENTER.
+<a id="восстановление-и-защита-api-на-100"></a>
 
-## Системы, использованные в проверках
+## Recovery and API protection on 1.0.0
 
-- **[Modbus Devices для Home Assistant](https://github.com/dk-1983/Modbus_Devices)** — клиентская интеграция Home Assistant, профиль YCJ-A002 для опроса базовых параметров шлюза.
-- **[Moxa / 4VRS Gateway](https://github.com/dk-1983/moxa-4vrs-gateway)** — шлюз на UC-7420-LX Plus, связывающий сетевой клиент с физической линией RS-485 ESP.
+Device checks passed for HTTP401 authentication, 403 bad token, 400 invalid value, repeated request_id without resending, and 409 conflicting write. Main pages returned 200. After diagnostic Wi-Fi disconnection, network/MQTT recovered and five Discovery configurations received PUBACK; uptime continued and fresh hOn packets arrived. MQTT/Modbus settings were restored to originally disabled transports. AC left ON, COOL, 22 °C, AUTO, NONE, Quiet OFF, display ON, swing OFF/CENTER.
 
-Проверяемый тракт: **Home Assistant / Modbus Devices → Moxa / 4VRS Gateway → RS-485 / MAX485 → ESP32-S3**. Для описанной проверки Moxa использовала Modbus TCP → RTU, последовательная линия — 19200 8N1. Чтение через этот тракт подтверждено; границы проверки записи указаны в разделе стенда выше. Выбор транспорта описан в [REGISTERS.md](REGISTERS.md#home-assistant-и-moxa).
+<a id="системы-использованные-в-проверках"></a>
+
+## Systems used in validation
+
+- **[Modbus Devices for Home Assistant](https://github.com/dk-1983/Modbus_Devices)** — HA client integration using the YCJ-A002 profile to poll base bridge parameters.
+- **[Moxa / 4VRS Gateway](https://github.com/dk-1983/moxa-4vrs-gateway)** — UC-7420-LX Plus gateway connecting the network client to ESP's physical RS-485 line.
+
+Tested path: **Home Assistant / Modbus Devices → Moxa / 4VRS Gateway → RS-485 / MAX485 → ESP32-S3**. Moxa used Modbus TCP → RTU, serial 19200 8N1. Reads were confirmed; write coverage limits are above. [Transport selection](REGISTERS.md#home-assistant-and-moxa).

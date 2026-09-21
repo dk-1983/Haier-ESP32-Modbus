@@ -1,59 +1,61 @@
+[English](CHANGELOG.md) | [Русский](CHANGELOG_RU.md)
+
 # 1.0.0 — 2026-09-21
 
-- Исправлен единый источник времени MQTT: отметка получения и проверка возраста используют ESPHome millis, предотвращая ложный expired_command.
-- Первый стабильный выпуск ESP32-S3 N16R8: локальный веб-пульт, MQTT/Discovery, независимые Modbus RTU и TCP, ArduinoOTA.
-- Аппаратные проверки команд по ответам реального Haier; проверка RS-485 на стенде с эмулятором.
-- Включены исправления границ копирования hOn (0.6.7) и обслуживания watchdog при OTA (0.6.8).
-- Обновлены подключение, результаты испытаний и ограничения. Исходники без индивидуальных паролей и образов устройства.
+- Unified MQTT clock: receive timestamp and age check use ESPHome millis, preventing false expired_command.
+- First stable ESP32-S3 N16R8 release: local web controls, MQTT/Discovery, independent Modbus RTU/TCP and ArduinoOTA.
+- Commands validated against real Haier replies; RS-485 bench validated with a simulator.
+- Includes bounded hOn copy fix (0.6.7) and OTA watchdog servicing (0.6.8).
+- Updated connections, test results and limitations. Source only, without individual credentials or device images.
 
 # 0.6.8 — 2026-09-21
 
-- Во время синхронной ArduinoOTA-загрузки обслуживается watchdog ESPHome по событиям начала и прогресса передачи. Watchdog остаётся включённым.
-- Исправляет подтверждённую перезагрузку loopTask во время передачи полного образа по Wi-Fi.
+- Services the ESPHome watchdog during synchronous ArduinoOTA start/progress events; watchdog remains enabled.
+- Fixes the confirmed loopTask reset during full-image Wi-Fi upload.
 
 # 0.6.7 — 2026-09-21
 
-- Исправлена запись за границей 18-байтной структуры датчиков при приёме hOn: четыре дополнительных байта протокола больше не перезаписывают соседние поля веб-сервера.
-- Добавлена проверка границ копирования с защитными байтами и укороченными пакетами.
-- Номера 0.6.1–0.6.6 использовались для отдельных аппаратных диагностических сборок.
+- Fixes an out-of-bounds copy into the 18-byte hOn sensor structure: four extra protocol bytes no longer overwrite adjacent web-server fields.
+- Adds guard-byte and short-packet copy tests.
+- Versions 0.6.1–0.6.6 were used for separate hardware diagnostic builds.
 
 # 0.6.0 — 2026-09-20
 
-- Паритет веб-пульта с ESP8266 v0.5.1: питание, разделы управления, общее меню, обзор, Wi-Fi и информация о памяти/PSRAM.
-- Home Assistant Discovery пяти сущностей с QoS1/PUBACK; отдельный выключатель.
-- Атомарный HVAC mode+power, подавление промежуточной телеметрии и отбрасывание старого state в очереди.
-- Таблица сообщений hOn хранится без динамических строк. Сохранены Modbus и существующая раскладка NVS.
-- Программная проверка и сборка; испытания на S3 ожидают готовности аппаратной части.
+- Web-panel parity with ESP8266 v0.5.1: power, control sections, shared navigation, overview, Wi-Fi and memory/PSRAM information.
+- Home Assistant Discovery for five entities with QoS1/PUBACK and an independent switch.
+- Atomic HVAC mode+power, suppression of intermediate telemetry, stale queued-state rejection.
+- hOn message table stored without dynamic strings. Modbus and existing NVS layout preserved.
+- Software checks/build completed; S3 hardware tests awaited hardware readiness at this stage.
 
-# Изменения
+# Changes
 
 ## 0.5.1 — 2026-09-20
 
-- Защищённая страница `/wifi/reset`: очистка сохранённой и ожидающей сети с возвратом setup AP.
-- Сохранение настроек MQTT/Modbus и паролей управления при сбросе сети.
-- Сброс выполняется после HTTP-ответа; во время команды кондиционера или настройки сети возвращается busy.
+- Protected `/wifi/reset` page clears active/candidate networks and restores the setup AP.
+- Preserves MQTT/Modbus settings and control passwords during network reset.
+- Reset follows the HTTP response; pending AC commands or network configuration return busy.
 
 ## 0.5.0 — 2026-09-20
 
-- MQTT-клиент внешнего брокера через Wi-Fi на ESP-MQTT.
-- Отдельный выключатель и настройки брокера на `/mqtt`, сохранение в NVS без выдачи пароля через API.
-- Топики состояния, доступности/Last Will, команд и результатов; общий арбитр с HTTP/Modbus.
-- Фоновые сетевые операции, ограниченные очереди, отклонение retained-команд при подписке.
-- Тесты преобразования команд и фрагментации сообщений, документация MQTT.
+- External-broker Wi-Fi MQTT client using ESP-MQTT.
+- Independent switch and broker settings at `/mqtt`, NVS persistence without API password disclosure.
+- State, availability/Last Will, command and result topics; shared HTTP/Modbus arbiter.
+- Background networking, bounded queues, retained-command rejection on subscription.
+- Command conversion/message fragmentation tests and MQTT documentation.
 
 ## 0.4.0 — 2026-09-20
 
-- Перенос проверенного ESP8266 PoC на ESP32-S3-WROOM-1 N16R8.
-- Карта YCJ-A002 и расширения, независимые Modbus RTU и TCP.
-- Веб-пульт, Wi-Fi setup и OTA, исходные документы и native-тесты.
-- Локальный коммит 0e3f371; версия в health исторически называлась `0.4.0-s3-modbus`.
+- Port of the tested ESP8266 PoC to ESP32-S3-WROOM-1 N16R8.
+- YCJ-A002 map/extensions, independent Modbus RTU and TCP.
+- Web controls, Wi-Fi setup, OTA, source references and native tests.
+- Local commit 0e3f371; health version was historically `0.4.0-s3-modbus`.
 
-Версия прошивки задаётся в components/fourvrs_portal/version.h и видна в `/health`. Git-теги vX.Y.Z отмечают исходники соответствующей версии. Сборка/тесты на ПК и проверка на оборудовании отмечаются раздельно; тег не означает аппаратную сертификацию.
+Firmware version is defined in components/fourvrs_portal/version.h and shown at `/health`. Git tags vX.Y.Z identify version source. Host/build checks and hardware validation are recorded separately; a tag is not hardware certification.
 
-## 0.6.1 — отменённая диагностическая сборка
+## 0.6.1 — cancelled diagnostic build
 
-- Пробная сборка с подтяжкой RX собрана, но не установлена: OTA прервалась. По решению пользователя эксперимент отменён; исходники UART и версия возвращены к v0.6.0 без подтяжек. Не использовать пробный образ 0.6.1.
+- RX pull-up experiment built but not installed: OTA was interrupted. The user cancelled the experiment; UART source/version returned to v0.6.0 without pull-ups. Do not use the experimental 0.6.1 image.
 
-## 0.6.2-tx-invert — диагностическая сборка
+## 0.6.2-tx-invert — diagnostic build
 
-- По запросу пользователя инвертирован только Haier TX GPIO17. RX GPIO18 без инверсии, обе подтяжки выключены. Предназначена для измерения выхода, не подтверждена как рабочая конфигурация Haier. Сборка прошла, OTA прервалась; установка не подтверждена.
+- At the user's request, only Haier TX GPIO17 was inverted. RX GPIO18 remained non-inverted; both pull-ups disabled. Intended for output measurements, not validated as a working Haier configuration. Build passed, OTA interrupted; installation unconfirmed.

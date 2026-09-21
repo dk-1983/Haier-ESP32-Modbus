@@ -77,3 +77,61 @@ s.append('</svg>');svg=''.join(s);out.mkdir(exist_ok=True,parents=True)
 (out/'haier-s3-schematic.png').write_bytes(resvg_py.svg_to_bytes(svg_string=svg))
 print(out/'haier-s3-schematic.png')
 
+
+# Keep electrical geometry identical in both documentation languages.
+EN_LABELS = {'Принципиальная схема макета  /  GPIO сверены с haier-s3.yaml  /  21.09.2026': 'Prototype schematic  /  '
+                                                                                'GPIO checked against '
+                                                                                'haier-s3.yaml  /  '
+                                                                                '2026-09-21',
+ '01  ПИТАНИЕ': '01  POWER SUPPLY',
+ 'Теплоотвод / TAB = OUT': 'Heatsink / TAB = OUT',
+ 'C3: проверить тип и ESR': 'C3: verify type and ESR',
+ 'Все земли общие': 'All grounds are common',
+ '03  RS-485 • 19200 8N1 (стенд)': '03  RS-485 • 19200 8N1 (bench)',
+ 'Сигналы платы Haier': 'Haier board signals',
+ 'DIR: 0 = приём; 1 = передача': 'DIR: 0 = receive; 1 = transmit',
+ '04  ПРОГРАММИРОВАНИЕ И ПРИМЕЧАНИЯ': '04  PROGRAMMING AND NOTES',
+ 'UART0: GPIO43 / pad 37 (TXD0) → RX адаптера; GPIO44 / pad 36 (RXD0) ← TX адаптера.': 'UART0: GPIO43 / pad '
+                                                                                       '37 (TXD0) → adapter '
+                                                                                       'RX; GPIO44 / pad 36 '
+                                                                                       '(RXD0) ← adapter TX.',
+ 'Уровни адаптера 3.3 V; общая GND. SB1 замыкает GPIO0 на GND при включении питания.': 'Use a 3.3 V logic '
+                                                                                       'adapter and common '
+                                                                                       'GND. Hold SB1 to '
+                                                                                       'ground GPIO0 when '
+                                                                                       'powering on.',
+ 'Оба делителя: 10 kΩ от источника, 20 kΩ к GND. При входных 5.0 V → расчётные 3.33 V.': 'Both dividers: 10 '
+                                                                                         'kΩ from source, 20 '
+                                                                                         'kΩ to GND. A 5.0 V '
+                                                                                         'input gives a '
+                                                                                         'nominal 3.33 V '
+                                                                                         'output.',
+ 'R6* — предусмотренная подтяжка DIR. Добавить 100 nF между VCC и GND у MAX485.': 'R6* is the proposed DIR '
+                                                                                  'pull-down. Add 100 nF '
+                                                                                  'between VCC and GND close '
+                                                                                  'to MAX485.',
+ 'Для PCB: проверить EN RC, питание/нагрев, терминацию и смещение RS-485; см. SCHEMATIC.md.': 'For PCB '
+                                                                                              'design: '
+                                                                                              'verify EN RC, '
+                                                                                              'power/heat, '
+                                                                                              'RS-485 '
+                                                                                              'termination '
+                                                                                              'and bias; see '
+                                                                                              'SCHEMATIC.md.',
+ 'Числа у U1 — площадки модуля, не GPIO. Порядок контактов разъёма Haier здесь не задаётся.': 'Numbers '
+                                                                                              'beside U1 are '
+                                                                                              'module pads, '
+                                                                                              'not GPIO '
+                                                                                              'numbers. '
+                                                                                              'Haier '
+                                                                                              'connector pin '
+                                                                                              'order is not '
+                                                                                              'specified.',
+ 'Макет • без гальванической развязки • не чертёж PCB': 'Prototype • no galvanic isolation • not a PCB '
+                                                        'layout'}
+english_svg = svg
+for ru, en in EN_LABELS.items():
+    english_svg = english_svg.replace(escape(ru), escape(en))
+(out/'haier-s3-schematic-en.svg').write_text(english_svg, encoding='utf-8')
+(out/'haier-s3-schematic-en.png').write_bytes(resvg_py.svg_to_bytes(svg_string=english_svg))
+print(out/'haier-s3-schematic-en.png')

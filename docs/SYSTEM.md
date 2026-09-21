@@ -1,53 +1,69 @@
-# Вся система: Haier → ESP32-S3 → Home Assistant
+[English](SYSTEM.md) | [Русский](SYSTEM_RU.md)
 
-Три проекта образуют общий путь управления: **Haier-ESP32-Modbus** общается с кондиционером, **Moxa / 4VRS Gateway** передаёт Modbus между RS-485 и сетью, **Modbus Devices** добавляет оборудование в Home Assistant. Для каждой части доступны исходники, настройка и результаты проверок.
+<a id="вся-система-haier--esp32-s3--home-assistant"></a>
 
-## Что подготовить
+# Complete system: Haier → ESP32-S3 → Home Assistant
 
-| Часть | Для чего нужна | Где взять описание |
+Three projects form the control path: **Haier-ESP32-Modbus** communicates with the AC, **Moxa / 4VRS Gateway** bridges RS-485 and the network, and **Modbus Devices** adds the equipment to Home Assistant. Source, setup instructions and validation results are available for each part.
+
+<a id="что-подготовить"></a>
+
+## What to prepare
+
+| Component | Purpose | Documentation |
 |---|---|---|
-| Совместимый Haier с hOn UART | Управляемый кондиционер; проверен AS25HSL1HRA-W | [Результаты проверки](VALIDATION.md) |
-| ESP32-S3-WROOM-1 N16R8, питание и согласование уровней UART | Контроллер с этой прошивкой | [Подключение GPIO и уровней](HARDWARE.md), [сборка прошивки](../README.md#сборка) |
-| Home Assistant и Modbus Devices | Управление питанием, режимом, температурой и вентилятором | [Проект Modbus Devices](https://github.com/dk-1983/Modbus_Devices) |
-| Трансивер RS-485 и Moxa с 4VRS Gateway | Вариант подключения через последовательную линию | [Подключение MAX485](HARDWARE.md), [проект Gateway](https://github.com/dk-1983/moxa-4vrs-gateway) |
+| Compatible Haier with hOn UART | Controlled AC; AS25HSL1HRA-W tested | [Validation](VALIDATION.md) |
+| ESP32-S3-WROOM-1 N16R8, power and UART level conversion | Controller running this firmware | [GPIO and levels](HARDWARE.md), [firmware build](../README.md#build) |
+| Home Assistant and Modbus Devices | Power, mode, temperature and fan controls | [Modbus Devices](https://github.com/dk-1983/Modbus_Devices) |
+| RS-485 transceiver and Moxa with 4VRS Gateway | Serial-line connection option | [MAX485 connections](HARDWARE.md), [Gateway project](https://github.com/dk-1983/moxa-4vrs-gateway) |
 
-Moxa и трансивер нужны для варианта RS-485. При прямом Modbus TCP по Wi-Fi достаточно ESP и Home Assistant с Modbus Devices. Проект предоставляет программные компоненты и проверенное подключение макета; законченная печатная плата, корпус и схема промышленной защиты пока не выпускаются.
+Moxa and the transceiver are used for RS-485. Direct Modbus TCP over Wi-Fi needs only ESP and Home Assistant with Modbus Devices. The project provides software and tested bench connections; a finished PCB, enclosure and industrial protection circuit are not yet available.
 
-## 1. Запустить контроллер Haier
+<a id="1-запустить-контроллер-haier"></a>
 
-Соберите основную прошивку `haier-s3.yaml` со своими паролями по [README](../README.md#сборка). Подключите UART и питание по [HARDWARE.md](HARDWARE.md). Настройте Wi-Fi через точку первоначальной настройки, затем откройте `/control` по полученному адресу ESP.
+## 1. Start the Haier controller
 
-До настройки остальных частей убедитесь, что контроллер получает свежую температуру и состояние кондиционера. Одна тестовая команда должна завершиться подтверждением Haier; после неё верните исходную настройку. [API и правила подтверждения](API.md).
+Build `haier-s3.yaml` with your credentials following the [README](../README.md#build). Connect UART and power as described in [HARDWARE.md](HARDWARE.md). Configure Wi-Fi through the setup access point, then open `/control` at the ESP address.
 
-## 2. Выбрать путь связи
+Before configuring other components, verify fresh temperature and AC state. One test command should receive Haier confirmation; restore the original setting afterward. [API and confirmation rules](API.md).
 
-| Путь | Настройки ESP | Настройки Moxa | Транспорт Modbus Devices |
+<a id="2-выбрать-путь-связи"></a>
+
+## 2. Choose the connection path
+
+| Path | ESP settings | Moxa settings | Modbus Devices transport |
 |---|---|---|---|
-| ESP → Wi-Fi → Home Assistant | TCP включён, порт 502 | Не используется | Modbus TCP/IP |
-| ESP → RS-485 → Moxa → Home Assistant | RTU включён; для описанного стенда 19200 8N1, адрес 1 | Modbus TCP → RTU, последовательные параметры совпадают с ESP | Modbus TCP/IP; адрес и сетевой порт Moxa |
-| ESP → RS-485 → Moxa RAW → Home Assistant | RTU включён, параметры совпадают с Moxa | RAW TCP | Modbus RTU over TCP; адрес и сетевой порт Moxa |
+| ESP → Wi-Fi → Home Assistant | TCP enabled, port 502 | Not used | Modbus TCP/IP |
+| ESP → RS-485 → Moxa → Home Assistant | RTU enabled; documented bench: 19200 8N1, address 1 | Modbus TCP → RTU, matching serial settings | Modbus TCP/IP; Moxa host and network port |
+| ESP → RS-485 → Moxa RAW → Home Assistant | RTU enabled, matching Moxa parameters | RAW TCP | Modbus RTU over TCP; Moxa host and network port |
 
-Настройки ESP находятся на `/modbus`. RTU и TCP включаются независимо. Для Moxa используйте [руководство 4VRS Gateway](https://github.com/dk-1983/moxa-4vrs-gateway/blob/main/docs/user-guide.md). Modbus TCP использует MBAP, RAW TCP переносит RTU с CRC; транспорт клиента должен соответствовать выбранному режиму шлюза.
+ESP settings are at `/modbus`; RTU and TCP are independent. For Moxa, follow the [4VRS Gateway guide](https://github.com/dk-1983/moxa-4vrs-gateway/blob/main/docs/user-guide.md). Modbus TCP uses MBAP; RAW TCP carries RTU frames with CRC. Match the client transport to the gateway mode.
 
-В наших испытаниях физической линии использовалась Moxa UC-7420-LX Plus с 4VRS Gateway в режиме Modbus TCP → RTU. Подробная [карта регистров и варианты транспорта](REGISTERS.md#home-assistant-и-moxa).
+The physical-line test used Moxa UC-7420-LX Plus with 4VRS Gateway in Modbus TCP → RTU mode. [Register map and transport options](REGISTERS.md#home-assistant-and-moxa).
 
-## 3. Подключить Modbus Devices
+<a id="3-подключить-modbus-devices"></a>
 
-Установите или обновите [Modbus Devices](https://github.com/dk-1983/Modbus_Devices/blob/main/README_RU.md) до **1.3.0 или новее** через HACS и перезапустите Home Assistant. При добавлении нового хаба выберите производителя **4VRS**, модель **Haier-ESP32**. Укажите выбранный транспорт, адрес ESP или Moxa, соответствующий сетевой порт и Unit ID.
+## 3. Connect Modbus Devices
 
-Это готовый профиль нашей разработки: климат, качание и фиксированные положения жалюзи, пресеты, тихий режим, дисплей и диагностика связи/команд. Ручное описание регистров не требуется. Профиль подтверждает команды через контроллер и обратное чтение. Отдельный профиль **Haier YCJ-A002** сохраняется для заводского адаптера; для расширенных функций ESP выбирайте **4VRS Haier-ESP32**.
+Install or update [Modbus Devices](https://github.com/dk-1983/Modbus_Devices) to **1.3.0 or later** through HACS and restart Home Assistant. Add a new hub and select manufacturer **4VRS**, model **Haier-ESP32**. Enter the chosen transport, ESP or Moxa host, corresponding port and Unit ID.
 
-Для панели можно воспользоваться генератором карточки в Modbus Devices. [Краткая инструкция в README](../README.md#готовая-интеграция-с-home-assistant). Полная аппаратная проверка расширенного профиля, согласно описанию Modbus Devices, запланирована с производственной платой; результаты уже выполненных проверок прошивки приведены в [VALIDATION.md](VALIDATION.md).
+This ready-made profile provides climate, swing/fixed louvre positions, presets, quiet, display and link/command diagnostics. No manual register definitions are required. Commands are confirmed through the controller and readback. The separate **Haier YCJ-A002** profile remains for the factory adapter; select **4VRS Haier-ESP32** for ESP extensions.
 
-## 4. Проверить всю цепочку
+You can use the Modbus Devices dashboard card generator. [Quick setup](../README.md#ready-made-home-assistant-integration). According to Modbus Devices documentation, full extended-profile hardware validation is planned with the production PCB. Completed firmware results are in [VALIDATION.md](VALIDATION.md).
 
-1. Сверьте температуру, уставку и питание в Home Assistant с локальным пультом ESP.
-2. Измените одну настройку из Home Assistant и дождитесь фактического обратного состояния. Положительный ответ Modbus означает принятие команды; `Input 7 = 2` означает подтверждение двумя пакетами Haier.
-3. Для питания используется **Coil 0: 0 = выключить, 1 = включить**. Выбирайте подходящий момент для такой проверки; не переключайте компрессор часто.
-4. Верните исходные настройки и проверьте их по свежему состоянию.
+<a id="4-проверить-всю-цепочку"></a>
 
-Если ответа нет, проверяйте цепочку по порядку: свежесть Haier на ESP → включённый транспорт ESP → последовательные параметры и режим Moxa → транспорт и адрес клиента. [Системы и результаты выполненных проверок](VALIDATION.md#системы-использованные-в-проверках).
+## 4. Verify the complete path
 
-## Дополнительный путь MQTT
+1. Compare temperature, setpoint and power in Home Assistant with the ESP web panel.
+2. Change one setting and wait for actual readback. A successful Modbus response means accepted; `Input 7 = 2` means two matching Haier packets confirmed it.
+3. Power uses **Coil 0: 0 = off, 1 = on**. Choose a suitable time; avoid frequent compressor cycling.
+4. Restore the original settings and verify fresh state.
 
-Эта же прошивка поддерживает MQTT и Home Assistant Discovery через внешний брокер. Это отдельный вариант подключения к Home Assistant; его настройка описана в [MQTT.md](MQTT.md). В отчёте отдельно указаны проверка MQTT-команд и границы проверки интерфейса Home Assistant.
+If there is no response, check in order: fresh Haier data on ESP → enabled transport → serial parameters/Moxa mode → client transport/address. [Systems and test results](VALIDATION.md#systems-used-in-validation).
+
+<a id="дополнительный-путь-mqtt"></a>
+
+## Alternative MQTT path
+
+The same firmware supports MQTT and Home Assistant Discovery through an external broker. This is a separate HA connection option; see [MQTT.md](MQTT.md). The validation report distinguishes MQTT command tests from Home Assistant UI coverage.

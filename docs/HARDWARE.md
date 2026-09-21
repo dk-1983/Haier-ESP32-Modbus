@@ -1,49 +1,59 @@
-# Стенд ESP32-S3-WROOM-1 N16R8
+[English](HARDWARE.md) | [Русский](HARDWARE_RU.md)
 
-Это конфигурация нового модуля ESP32-S3, а не заводского одноядерного ESP32-for-Haier. Нужны питание3.3V, общая земля, цепь EN/BOOT и UART-программатор с логикой3.3V. Модуль не имеет входа5V; схему питания сверяйте с [Espressif](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html).
+<a id="стенд-esp32-s3-wroom-1-n16r8"></a>
 
-| Назначение | Вывод ESP32-S3 | Подключение |
+# ESP32-S3-WROOM-1 N16R8 bench hardware
+
+This configuration targets a new ESP32-S3 module, not the factory single-core ESP32-for-Haier. It needs 3.3 V power, common ground, EN/BOOT circuitry and a UART programmer with 3.3 V logic. The module has no 5 V input; consult [Espressif's hardware guide](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html).
+
+| Purpose | ESP32-S3 pin | Connection |
 |---|---|---|
-| UART0 TX | GPIO43 / TXD0 | RX программатора ESP Link |
-| UART0 RX | GPIO44 / RXD0 | TX программатора ESP Link |
-| hOn TX | GPIO17 | RX платы кондиционера |
-| hOn RX | GPIO18 | TX платы кондиционера |
-| RS485 TX | GPIO15 | DI трансивера |
-| RS485 RX | GPIO16 | RO трансивера |
-| RS485 direction | GPIO21 | DE и /RE вместе, подтяжка10k кGND |
-| GND | GND | Общая сигнальная земля по схеме питания/изоляции |
+| UART0 TX | GPIO43 / TXD0 | ESP Link programmer RX |
+| UART0 RX | GPIO44 / RXD0 | ESP Link programmer TX |
+| hOn TX | GPIO17 | Air conditioner RX |
+| hOn RX | GPIO18 | Air conditioner TX |
+| RS485 TX | GPIO15 | Transceiver DI |
+| RS485 RX | GPIO16 | Transceiver RO |
+| RS485 direction | GPIO21 | DE and /RE together, 10 kΩ pull-down to GND |
+| GND | GND | Common signal ground according to the power/isolation design |
 
-Выводы заданы substitutions в haier-s3.yaml. UART0 зарезервирован под прошивку/логи, остальные два аппаратных UART выделяются ESPHome двум UART-компонентам. GPIO35..37 у N16R8 заняты PSRAM и не используются. GPIO0/45/46 не используются для шины.
+Pins are substitutions in haier-s3.yaml. UART0 is reserved for flashing/logs; ESPHome assigns the other two hardware UARTs to the two UART components. GPIO35..37 on N16R8 are occupied by PSRAM and unused here. GPIO0/45/46 are not used for the buses.
 
-Трансивер должен иметь совместимые3.3V уровни (например3.3V RS485-трансивер); голый5V MAX485 нельзя напрямую подключать выходомRO к ESP32. MAX485ESA USB-адаптер может служить клиентской стороной RS485 без переделки. Терминация и смещение шины выбираются для фактической линии; это не законченный проект промышленной защиты/изоляции.
+The transceiver must have compatible 3.3 V levels (for example, a 3.3 V RS-485 transceiver); do not wire a bare 5 V MAX485 RO output directly to ESP32. A MAX485ESA USB adapter can be used on the RS-485 client side without modification. Termination and biasing depend on the actual line; this is not a finished industrial protection/isolation design.
 
-На DE предусмотрите аппаратную подтяжку кGND, чтобы передатчик молчал при reset/boot. ESPHome flow_control_pin использует штатный UART RS485 half-duplex driver. Отключённый RTU не передаёт ответы. Питание модуля и изоляцию относительно силовой платы проверяют до подключения USB/компьютера.
+Provide a hardware DE pull-down so the transmitter stays disabled during reset/boot. ESPHome flow_control_pin uses the standard UART RS485 half-duplex driver. Disabled RTU does not reply. Verify module power and isolation from the power board before connecting USB/computer equipment.
 
-## Электрическая схема
+<a id="электрическая-схема"></a>
 
-[Схема и проверка номиналов/пинов](SCHEMATIC.md) · [SVG](assets/haier-s3-schematic.svg) · [PNG](assets/haier-s3-schematic.png).
+## Electrical schematic
 
-## Проверенное подключение
+[Schematic, values and pin verification](SCHEMATIC.md) · [SVG](assets/haier-s3-schematic-en.svg) · [PNG](assets/haier-s3-schematic-en.png).
 
-Haier UART: 9600 8N1, TX GPIO17 → RX Haier; TX Haier → согласование уровня → GPIO18. Инверсии и внутренние подтяжки не используются. Выход 5 В нельзя соединять с GPIO ESP32 напрямую. Резистивный делитель включается только в направлении 5 В → 3,3 В:
+<a id="проверенное-подключение"></a>
+
+## Validated connections
+
+Haier UART: 9600 8N1, GPIO17 TX → Haier RX; Haier TX → level conversion → GPIO18. No inversion or internal pull-ups. A 5 V output must not connect directly to an ESP32 GPIO. The resistor divider applies only in the 5 V → 3.3 V direction:
 
 ```text
-TX источника ── Rверх ──┬── RX ESP32
-                       Rниз
-                        │
-                       GND
+Source TX ── Rupper ──┬── ESP32 RX
+                     Rlower
+                       │
+                      GND
 ```
 
-Uвыход = Uвход × Rниз / (Rверх + Rниз). Номиналы выбирают по фактическому максимальному уровню источника, допускам и форме импульсов. Проверка выполняется относительно общей земли, до подключения GPIO. На стенде MAX485 RO проверен с Rверх=10 кОм и Rниз=20 кОм; это зафиксированный опыт, не универсальный номинал для любого питания.
+Vout = Vin × Rlower / (Rupper + Rlower). Select values based on the actual maximum source level, tolerances and waveform. Measure relative to common ground before connecting the GPIO. MAX485 RO was tested with Rupper=10 kΩ and Rlower=20 kΩ; this is a recorded bench result, not a universal value for any supply.
 
-MAX485: DI (4) ← GPIO15; RO (1) → делитель → GPIO16; DE (3) и /RE (2) вместе ← GPIO21; подтяжка GPIO21 10 кОм к GND. Питание MAX485 — 5 В. Прямое управление входами DI/DE допустимо лишь при соблюдении порогов конкретного трансивера; выход RO согласуется отдельно. Физический канал проверен на 19200 8N1 через [4VRS Gateway для Moxa](https://github.com/dk-1983/moxa-4vrs-gateway) на UC-7420-LX Plus в режиме Modbus TCP → RTU и [Modbus Devices для Home Assistant](https://github.com/dk-1983/Modbus_Devices) с профилем YCJ-A002. Подробности настройки Moxa: [руководство Gateway](https://github.com/dk-1983/moxa-4vrs-gateway/blob/main/docs/user-guide.md).
+MAX485: DI (4) ← GPIO15; RO (1) → divider → GPIO16; DE (3) and /RE (2) together ← GPIO21; GPIO21 has a 10 kΩ pull-down to GND. MAX485 supply is 5 V. Direct DI/DE control requires compliance with the exact transceiver's thresholds; RO is converted separately. The physical channel was validated at 19200 8N1 through [4VRS Gateway for Moxa](https://github.com/dk-1983/moxa-4vrs-gateway) on UC-7420-LX Plus in Modbus TCP → RTU mode and [Modbus Devices for Home Assistant](https://github.com/dk-1983/Modbus_Devices) using the YCJ-A002 profile. [Gateway configuration guide](https://github.com/dk-1983/moxa-4vrs-gateway/blob/main/docs/user-guide.md).
 
-Две обычные транзисторные оптопары были испытаны на UART 9600. Обмен работал, но фронты затянуты. На передаче MAX485 при 19200 короткие импульсы искажались; прямое управление DI восстановило обмен. Для изолированного варианта выбирают оптопары/цифровой изолятор с подходящими временными характеристиками. Общая земля или общее неизолированное питание отменяют полную гальваническую развязку.
+Two ordinary transistor optocouplers were tested at UART 9600. Communication worked but edges were slow. At MAX485 transmit speed 19200, short pulses were distorted; direct DI drive restored communication. An isolated version needs optocouplers/digital isolators with suitable timing. Shared ground or a shared non-isolated supply defeats full galvanic isolation.
 
-## Стенд до подключения кондиционера
+<a id="стенд-до-подключения-кондиционера"></a>
 
-В `bench/` находится эмулятор Haier для Arduino Nano ATmega328P (5 В), SoftwareSerial RX D10 / TX D11. Сначала проверяют GPIO и петлю TX/RX на 3,3 В, затем согласование уровней и обмен с эмулятором. Контроль осциллографом выполняют на принимающем выводе, включая короткие импульсы, а не только на TX источника.
+## Bench before connecting the AC
 
-Подтверждены 16 МБ Flash, 8 МБ PSRAM, работа UART без подтяжек и инверсии, локальное управление и OTA. Диагностические `gpio17-test.yaml` и `uart-loopback-test.yaml` не являются рабочей прошивкой кондиционера. Итоги: [VALIDATION.md](VALIDATION.md).
+`bench/` contains a Haier simulator for Arduino Nano ATmega328P (5 V), SoftwareSerial RX D10 / TX D11. First verify GPIO and TX/RX loopback at 3.3 V, then level conversion and simulator communication. Check waveforms at the receiving pin, including short pulses, not only at the source TX.
 
-Это проверенный макет интерфейсов, а не законченный проект печатной платы. Стабилизатор, защита питания, корпус, разъёмы, развязка и защита RS-485 проектируются отдельно. Номера GPIO не являются номерами контактов разъёма кондиционера.
+Confirmed: 16 MB Flash, 8 MB PSRAM, UART without pull-ups/inversion, local controls and OTA. `gpio17-test.yaml` and `uart-loopback-test.yaml` are diagnostics, not operating AC firmware. Results: [VALIDATION.md](VALIDATION.md).
+
+This is a tested interface prototype, not a finished PCB. Regulator, supply protection, enclosure, connectors, isolation and RS-485 protection need separate design work. GPIO numbers are not air conditioner connector pin numbers.
