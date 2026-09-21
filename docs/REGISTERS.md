@@ -61,3 +61,17 @@ with ModbusTcpClient("DEVICE_IP", port=502) as client:
 ```
 
 Для RTU тот же набор адресов; выберите19200,8N1 и адрес1 либо значения, сохранённые на странице /modbus.
+
+## Home Assistant и Moxa
+
+Для Home Assistant используется связанный проект [Modbus Devices для Home Assistant](https://github.com/dk-1983/Modbus_Devices). Его профиль **YCJ-A002** описывает базовую карту, сохранённую здесь. Дополнительные регистры жалюзи, пресетов и других функций перечислены выше; наличие регистра в прошивке само по себе не добавляет соответствующую сущность в профиль интеграции.
+
+| Подключение | Транспорт клиента | Настройка шлюза |
+|---|---|---|
+| Home Assistant → ESP по Wi-Fi | Modbus TCP/IP | На ESP включить TCP; порт 502, Unit ID как на странице `/modbus`. |
+| Home Assistant → Moxa → RS-485 ESP | Modbus TCP/IP | В [4VRS Gateway для Moxa](https://github.com/dk-1983/moxa-4vrs-gateway) выбрать Modbus TCP; на ESP включить RTU. |
+| Home Assistant → Moxa RAW → RS-485 ESP | Modbus RTU over TCP | В Gateway выбрать RAW TCP; клиент передаёт RTU-кадры с CRC без MBAP. |
+
+На физическом стенде этого проекта проверялся вариант Moxa Modbus TCP → RTU. RAW TCP приведён как отдельный поддерживаемый транспорт связанных проектов; это другая упаковка кадров. Последовательная сторона Moxa и ESP должна совпадать по скорости, формату и адресу: для описанного стенда **19200, 8N1, Unit ID 1**. Сетевой порт Moxa задаётся в Gateway и может отличаться от фиксированного порта 502 самого ESP.
+
+Ссылки: [документация Modbus Devices](https://github.com/dk-1983/Modbus_Devices#readme), [руководство Moxa / 4VRS Gateway](https://github.com/dk-1983/moxa-4vrs-gateway/blob/main/docs/user-guide.md).

@@ -53,6 +53,15 @@ python -m esphome compile haier-s3.yaml
 
 Страница `/modbus` позволяет включать RTU/TCP, выбирать Unit ID и скорость RTU. TCP работает на порту502 через основное Wi-Fi-подключение; подключения с setup AP отклоняются. Modbus TCP не имеет аутентификации и рассчитан на доверенную локальную сеть.
 
+## Связанные проекты
+
+| Проект | Роль |
+|---|---|
+| [Modbus Devices для Home Assistant](https://github.com/dk-1983/Modbus_Devices) | Клиент Modbus в стендовых проверках через Home Assistant; профиль YCJ-A002 соответствует базовым адресам этого шлюза. |
+| [4VRS Gateway для Moxa](https://github.com/dk-1983/moxa-4vrs-gateway) | Сетевой шлюз RS-485, использованный для проверки физического Modbus RTU на стенде. |
+
+К ESP можно обращаться напрямую по Modbus TCP через Wi-Fi. Для пути через RS-485 используется Moxa; транспорт клиента должен совпадать с режимом Gateway. Настройки и различия Modbus TCP / RAW TCP описаны в [карте регистров](docs/REGISTERS.md#home-assistant-и-moxa).
+
 ## Документация
 
 - [Карта регистров](docs/REGISTERS.md), [CSV](docs/registers.csv), [заводские источники](docs/sources/README.md).
