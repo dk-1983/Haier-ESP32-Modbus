@@ -11,3 +11,7 @@ subprocess.run([str(binary)],check=True,cwd=root)
 sensor_binary=out/('test_status_sensors.exe' if os.name=='nt' else 'test_status_sensors')
 subprocess.run(command+['-std=c++17','-Wall','-Wextra','-I',str(root),str(root/'tests/test_status_sensors.cpp'),'-o',str(sensor_binary)],check=True,cwd=root)
 subprocess.run([str(sensor_binary)],check=True,cwd=root)
+
+management_binary=out/('test_management.exe' if os.name=='nt' else 'test_management')
+subprocess.run(command+['-std=c++17','-Wall','-Wextra','-I',str(root),str(root/'tests/test_management.cpp'),'-o',str(management_binary)],check=True,cwd=root)
+subprocess.run([str(management_binary)],check=True,cwd=root)

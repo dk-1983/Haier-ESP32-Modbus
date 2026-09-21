@@ -5,6 +5,7 @@
 #include "ControlPage.h"
 #include "HomePage.h"
 #include "AboutPage.h"
+#include "SettingsPage.h"
 #include "WifiInfoPage.h"
 #include <esp_heap_caps.h>
 #include "version.h"
@@ -48,7 +49,7 @@ void Portal::start_portal_() {
 void Portal::show_setup_() {
   if (!portal_request_()) return;
   web_.sendHeader("Cache-Control", "no-store");
-  send_page_(SETUP_PAGE);
+  send_page_(credentials_.configured?SETUP_PAGE:SETTINGS_PAGE);
 }
 void Portal::finish_scan_() {
   if (!scanning_) return;
@@ -119,11 +120,13 @@ String Portal::health_() {
       ",\"uptime_s\":" + String(millis() / 1000) + ",\"sketch_md5\":" + json_string_(ESP.getSketchMD5()) + "}";
 }
 bool Portal::test_auth_() {
-  if (web_.authenticate("admin", ota_password_.c_str())) return true;
+  if(!credentials_ready_||!credentials_.configured){web_.send(403,"text/plain","Set personal passwords through setup Wi-Fi first");return false;}
+  if(web_.method()==HTTP_POST && web_.uri()!="/updates/config" && (updates_busy_()||credentials_restart_)){web_.send(409,"text/plain","Maintenance in progress");return false;}
+  if (web_.authenticate("admin", credentials_.web)) return true;
   web_.requestAuthentication(); return false;
 }
 void Portal::configure_web_() {
-  modbus_web_(); mqtt_web_(); wifi_reset_web_();
+  modbus_web_(); mqtt_web_(); wifi_reset_web_(); credentials_web_(); updates_web_();
   web_.on("/haier/extended", HTTP_POST, [this]() { extended_command_(); });
   web_.on("/diagnostics/wifi-drop", HTTP_POST, [this]() {
     if (!test_auth_()) return;
@@ -163,7 +166,7 @@ void Portal::configure_web_() {
   web_.on("/scan", HTTP_POST, [this]() {
     if (!portal_request_()) return;
     if (web_.arg("token") != token_) { web_.send(403, "text/plain", "Reload setup page."); return; }
-    if (pending_) { web_.send(409, "text/plain", "Connection pending."); return; }
+    if (pending_||updates_busy_()||credentials_restart_) { web_.send(409, "text/plain", "Connection pending."); return; }
     if (!scanning_) {
       WiFi.scanDelete(); scanning_ = true;
       if (WiFi.scanNetworks(true, false) == WIFI_SCAN_FAILED) {
@@ -180,7 +183,8 @@ void Portal::configure_web_() {
   web_.on("/wifi", HTTP_POST, [this]() {
     if (!portal_request_()) return;
     if (web_.arg("token") != token_) { web_.send(403, "text/plain", "Reload setup page."); return; }
-    if (pending_ || scanning_ || wifi_reset_pending_) { web_.send(409, "text/plain", "Wait for scan/connection."); return; }
+    if (pending_ || scanning_ || wifi_reset_pending_ || updates_busy_() || credentials_restart_) { web_.send(409, "text/plain", "Wait for scan/connection."); return; }
+    if(!credentials_.configured){web_.send(403,"text/plain","Set personal passwords first");return;}
     String s = web_.arg("ssid"), p = web_.arg("password");
     if (s.length() == 0 || s.length() > 32 || p.length() > 63 || (p.length() && p.length() < 8) ||
         strlen(s.c_str()) != s.length() || strlen(p.c_str()) != p.length()) {
@@ -210,6 +214,7 @@ void Portal::setup() {
   bool test_ok = hon_self_test();
   ESP_LOGI(TAG, "Isolated hOn regression tests: %s", test_ok ? "PASS" : "FAIL");
   if (!test_ok) { mark_failed(); return; }
+  if(!credentials_setup_()){ESP_LOGE(TAG,"Credential storage invalid; refusing insecure fallback");mark_failed();return;}
   saved_pref_ = global_preferences->make_preference<NetworkConfig>(0x48504301, true);
   candidate_pref_ = global_preferences->make_preference<NetworkConfig>(0x48504302, true);
   if (!saved_pref_.load(&saved_) || !valid_(saved_)) saved_ = NetworkConfig{};
@@ -224,12 +229,16 @@ void Portal::setup() {
   WiFi.persistent(false); WiFi.setHostname(hostname_.c_str()); WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(false); WiFi.setSleep(false);
   WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info) { if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) disconnect_reason_ = info.wifi_sta_disconnected.reason; });
-  if (!active_.ssid[0]) start_portal_(); else WiFi.begin(active_.ssid, active_.password);
-  modbus_setup_(); mqtt_setup_(); configure_ota_(); configure_web_(); outage_since_ = last_attempt_ = millis();
+  if (!credentials_.configured||!active_.ssid[0]) start_portal_(); else WiFi.begin(active_.ssid, active_.password);
+  if(credentials_.configured){modbus_setup_(); mqtt_setup_(); configure_ota_();updates_setup_();} configure_web_(); outage_since_ = last_attempt_ = millis();
   ESP_LOGI(TAG, "4VRS portal adapted for ESP32-S3; %s; setup complete", hostname_.c_str());
 }
 void Portal::loop() {
-  mqtt_loop_(); web_.handleClient(); finish_scan_(); modbus_loop_();
+  web_.handleClient();finish_scan_();
+  if(credentials_restart_){if(uint32_t(millis()-credentials_restart_at_)>=1000)ESP.restart();return;}
+  if(!credentials_.configured)return;
+  mqtt_loop_();modbus_loop_();
+  updates_loop_();
   // HTTP handlers can start timers; sample time AFTER handling the request.
   uint32_t now = millis();
   if(wifi_reset_pending_){wifi_reset_apply_();return;}
@@ -265,7 +274,7 @@ void Portal::loop() {
     if (radio_ap_() && storage_ok_ && !scanning_ && uint32_t(now - connected_since_) >= 15000 && uint32_t(now - last_stop_) >= 1000) {
       last_stop_ = now; WiFi.enableAP(false); ESP_LOGI(TAG, "Setup AP active=%s", radio_ap_() ? "yes" : "no");
     }
-    ArduinoOTA.handle();
+    updates_ota_();
   } else {
     if (connected_before_) {
       ++wifi_outages_;

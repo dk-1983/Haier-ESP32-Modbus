@@ -2,14 +2,46 @@
 
 # Install the firmware, step by step
 
-**Release v1.0.0 contains source code only. There is no ready-to-flash `.bin` in its Assets.** “Source code (zip)” is an archive to extract and build, not a file to upload to the ESP. Setup and web/OTA passwords are compiled into this version, so build with your own values. The procedure below starts from the release and ends with a working controller.
+## Install the ready-made v1.1.0 binary (Windows)
+
+No compiler, Git or ESPHome installation is needed for this path. Use **ESP32-S3-WROOM-1 N16R8 only**, with 16 MB Flash and 8 MB octal PSRAM.
+
+1. Open [release v1.1.0](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.1.0) → **Assets**. For first installation download **`haier-s3-n16r8-v1.1.0-factory.bin`** and `SHA256SUMS.txt`. `Source code` is optional. The **`-ota.bin`** file is only for network updates of an already installed controller.
+2. Install Python 3.11 with its launcher. Open PowerShell in the download folder and run `py -3.11 -m pip install "esptool>=5,<6"`. Check the download with `Get-FileHash .\haier-s3-n16r8-v1.1.0-factory.bin -Algorithm SHA256`; compare the hash with that filename's entry in `SHA256SUMS.txt`.
+3. Disconnect the controller from the air conditioner and wire on the bench with power off: **adapter TX (3.3 V logic) → GPIO44, adapter RX ← GPIO43, GND ↔ GND**. Supply the board correctly; a bare module takes regulated **3.3 V**, never 5 V. GPIO17/18 are for Haier, not flashing. See [schematic](SCHEMATIC.md).
+4. Find the adapter COM port in Device Manager and close serial monitors. Remove board power → hold **PGM/BOOT** (GPIO0 to GND) → apply power → release PGM. On a development board, hold BOOT while pressing/releasing RESET.
+5. Replace **COM6** with your port and write the merged image at **0x0**:
+
+```powershell
+py -3.11 -m esptool --chip esp32s3 --port COM6 --baud 460800 --before no-reset --after no-reset write-flash 0x0 haier-s3-n16r8-v1.1.0-factory.bin
+```
+
+6. Wait for successful writing and hash verification. If high-speed writing fails, retry at `--baud 115200`. **Restart power without holding PGM**: the command leaves the module in download mode. Full flash erasure is not required and would delete saved settings.
+7. On a new device, join **`haier-s3-<suffix>-setup`**, password **`Haier-Setup`**. Open **http://192.168.4.1** and set all three personal passwords: web, OTA and setup AP. After the restart, reconnect using your new AP password, open `/wifi`, choose your 2.4 GHz Wi-Fi and save. Return to your normal network and find the ESP address in the router's DHCP list.
+8. Open `http://DEVICE_IP/control`: username **`admin`**, your personal **web password**. Power off before connecting the Haier UART with RX level conversion; then check telemetry and configure [MQTT](MQTT.md) or [Modbus](SYSTEM.md).
+
+Passwords are saved in NVS and survive public OTA and Wi-Fi reset. Use `/settings` to change web, OTA or setup AP passwords independently. If you forget the web password, serial recovery is required; ordinary OTA does not override saved credentials. Upgrading an old v1.0.0 personal installation requires a one-time private v1.1.0 build first to migrate its compiled credentials; then the public OTA image can be used. [Details](MANAGEMENT.md).
+
+### Updating an installed controller with the release OTA file
+
+Download `haier-s3-n16r8-v1.1.0-ota.bin`. Use Arduino's [espota.py from Arduino-ESP32 3.3.9](https://raw.githubusercontent.com/espressif/arduino-esp32/3.3.9/tools/espota.py) (save it as `espota.py` in the same folder), or the copy installed by a previous source build:
+
+```powershell
+py -3.11 espota.py -i DEVICE_IP -p 8266 -a "CURRENT_OTA_PASSWORD" -f haier-s3-n16r8-v1.1.0-ota.bin
+```
+
+Use the password currently on the device for uploading. The saved personal passwords remain unchanged after restart. Allow the uploader through the local firewall. Never upload the factory file through OTA. This is **ArduinoOTA**, not ESPHome native OTA or browser upload.
+
+## Alternative: build with personal passwords
+
+The following steps are for a custom build. v1.0.0 remains source-only; v1.1.0 offers both source and ready-made binaries.
 
 ## 1. Download the release and prepare Windows
 
 Use an **ESP32-S3-WROOM-1 N16R8** (16 MB Flash, 8 MB octal PSRAM) and a USB-UART adapter with **3.3 V logic**. This firmware is not for ESP8266 or the original Haier Wi-Fi module.
 
 1. Install **Python 3.11** with the Python launcher and **Git**; reopen PowerShell after installation.
-2. Open [release v1.0.0](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.0.0), expand **Assets**, download **Source code (zip)** and extract it.
+2. Open [release v1.1.0](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.1.0), expand **Assets**, download **Source code (zip)** and extract it.
 3. Open PowerShell in the extracted folder containing `haier-s3.yaml` and `Build.ps1`. Check `py -3.11 --version` and `git --version`.
 
 ## 2. Set your passwords
@@ -89,6 +121,6 @@ This project uses **ArduinoOTA on port 8266**, not ESPHome's native OTA protocol
 .\work\tools\Scripts\python.exe work/platformio/packages/framework-arduinoespressif32/tools/espota.py -i DEVICE_IP -p 8266 -a "CURRENT_OTA_PASSWORD" -f .esphome/work/build/.pioenvs/haier-s3/firmware.bin
 ```
 
-Replace both placeholders. Authenticate with the password **currently installed**; after the update, the password compiled into the new image applies. Use the same local network and allow the uploader through the computer's firewall. Wait for completion and reboot, then check `/control`. Keep passwords out of shared screenshots and command logs. **Do not send `firmware.factory.bin` through OTA.**
+Replace both placeholders. Authenticate with the password **currently installed**; saved NVS passwords take precedence over compiled values after the update. Use the same local network and allow the uploader through the computer's firewall. Wait for completion and reboot, then check `/control`. Keep passwords out of shared screenshots and command logs. **Do not send `firmware.factory.bin` through OTA.**
 
 References: [Espressif esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32s3/esptool/) and [ESPHome command-line build tools](https://esphome.io/guides/cli/). Project-specific pins, paths and OTA port above follow this repository's configuration.

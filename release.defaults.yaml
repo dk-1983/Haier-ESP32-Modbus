@@ -1,0 +1,3 @@
+# Public builds ignore these migration-only fields and provision personal passwords.
+setup_password: "UNUSED-IN-PUBLIC"
+ota_password: "UNUSED-IN-PUBLIC-BUILD"

@@ -1,4 +1,6 @@
 substitutions:
+  public_release: "false"
+  test_update_feed: "false"
   haier_tx: GPIO17
   haier_rx: GPIO18
   rs485_tx: GPIO15
@@ -22,6 +24,8 @@ external_components:
       path: components
     components: [fourvrs_portal, haier]
 fourvrs_portal:
+  public_release: ${public_release}
+  test_update_feed: ${test_update_feed}
   id: portal
   climate_id: haier_ac
   rs485_uart_id: rs485_uart

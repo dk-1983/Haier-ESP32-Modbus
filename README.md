@@ -116,9 +116,9 @@ Target: **ESP32-S3-WROOM-1-N16R8**. Tested AC: **Haier AS25HSL1HRA-W**, UART 960
 
 Validated: ESP32-S3 N16R8, Haier AS25HSL1HRA-W communication through level conversion, web commands confirmed by actual state, and bench RS-485. Fixed memory corruption when copying hOn sensors and a watchdog reset during ArduinoOTA. Results and limits: [VALIDATION.md](docs/VALIDATION.md).
 
-**v1.0.0 is a source-only release: there is no ready-to-flash `.bin` in Assets.** Build with your own setup/web/OTA passwords, then flash the generated factory image.
+**[v1.1.0 includes ready-to-flash binaries](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.1.0)** for ESP32-S3 N16R8: `-factory.bin` for first USB-UART installation at 0x0 and `-ota.bin` for ArduinoOTA. No compilation is required. The public image asks you to set personal passwords on first boot. [Password changes and GitHub auto-updates](docs/MANAGEMENT.md) are available in the web interface. v1.0.0 remains source-only.
 
-**[Install the firmware, step by step](docs/FLASHING.md)** — download → passwords → build → USB-UART → BOOT → flash → Wi-Fi → OTA.
+**[Install the firmware, step by step](docs/FLASHING.md)** — download binary → USB-UART → BOOT → flash → personal passwords → Wi-Fi → OTA.
 
 <a id="сборка"></a>
 
@@ -159,7 +159,7 @@ Use the same main `haier-s3.yaml` firmware; no separate build is needed. Leave *
 
 ## First start
 
-Hardware connections: [HARDWARE.md](docs/HARDWARE.md). After flashing, join `haier-s3-<suffix>-setup` using `setup_password`, open `http://192.168.4.1` and select a 2.4 GHz network. Once the ESP has an address, open `/control`. Username: `admin`; password: `ota_password` from local `secrets.yaml` (shared by web/OTA in this version).
+Hardware connections: [HARDWARE.md](docs/HARDWARE.md). After flashing, join `haier-s3-<suffix>-setup` using `Haier-Setup` for a fresh public binary (or your saved setup password), open `http://192.168.4.1` and select a 2.4 GHz network. Once the ESP has an address, open `/control`. Username: `admin`. Public v1.1.0 first asks you to set personal passwords at `/settings`; existing provisioned devices keep their saved credentials. Private builds migrate `ota_password` as the initial web/OTA password. Afterwards web and OTA passwords can be changed independently.
 
 The `/wifi/reset` page forgets saved networks and returns to setup mode while retaining MQTT/Modbus settings and control passwords.
 

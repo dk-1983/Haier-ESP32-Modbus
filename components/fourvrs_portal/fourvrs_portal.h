@@ -9,6 +9,7 @@
 #include <ArduinoOTA.h>
 #include <esp_random.h>
 #include "SetupPage.h"
+#include "credentials_model.h"
 #include "ModbusPage.h"
 #include "modbus_core.h"
 #include "mqtt_client_state.h"
@@ -16,6 +17,7 @@
 namespace esphome { namespace fourvrs_portal {
 class Portal : public Component, public haier_bridge::Backend {
  public:
+  void set_public_release(bool value) { public_release_=value; }
   void set_climate(haier::HaierClimateBase *value) { climate_ = value; }
   void set_setup_password(const std::string &s) { setup_password_ = s.c_str(); }
   void set_ota_password(const std::string &s) { ota_password_ = s.c_str(); }
@@ -27,6 +29,11 @@ class Portal : public Component, public haier_bridge::Backend {
   void loop() override;
   void status_received(const char *data, size_t size);
  protected:
+  haier_management::Credentials credentials_{};
+  bool public_release_{false},credentials_ready_{false},credentials_restart_{false};uint32_t credentials_restart_at_{0};
+  bool credentials_setup_();void credentials_web_();
+  void updates_setup_();void updates_web_();void updates_loop_();bool updates_busy_();void updates_ota_();
+
   MqttConfig mqtt_config_{};MqttRuntime mqtt_runtime_{};ESPPreferenceObject mqtt_pref_;
   uint32_t mqtt_last_publish_{0},mqtt_seen_connections_{0},mqtt_command_count_{0};
   String mqtt_pending_id_;

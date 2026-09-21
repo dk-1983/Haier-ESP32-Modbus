@@ -21,3 +21,5 @@ Local Haier changes: MONITOR_ONLY action guard retained from the PoC; validated 
 YCJ-A002 numeric register definitions are used for interoperability. Original manuals remain available from the linked publishers; this repository does not redistribute their PDFs or Haier firmware. A register-compatible implementation is not a claim of identical behavior in every undocumented corner case.
 
 ESP-MQTT: official Espressif MQTT client bundled with ESP-IDF 5.5.4, Apache-2.0, see LICENSE-ESP-MQTT and https://github.com/espressif/esp-mqtt. MQTT adapters and tests written for this project are MIT.
+
+The management/update service also adapts JSON validation, TLS, signed-manifest and OTA patterns from 4VRS-Display under LICENSE-4VRS. This project uses its own release signing key.

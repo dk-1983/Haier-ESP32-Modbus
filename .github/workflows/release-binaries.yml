@@ -1,0 +1,30 @@
+name: Release binaries
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python tools/check_docs.py
+      - run: python tools/test_host.py
+      - run: pip install -r requirements.txt
+      - run: python tests/test_discovery.py
+      - name: Use public defaults in a clean checkout
+        run: |
+          test ! -e secrets.yaml
+          cp release.defaults.yaml secrets.yaml
+      - run: esphome -s public_release true compile haier-s3.yaml
+      - run: python tools/test_hon_simulator.py
+      - run: python tools/package_release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-binaries
+          path: work/public-release/*
+          if-no-files-found: error

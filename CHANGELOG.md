@@ -1,5 +1,13 @@
 [English](CHANGELOG.md) | [Русский](CHANGELOG_RU.md)
 
+# 1.1.0 — 2026-09-22
+
+- Personal web, ArduinoOTA and setup AP passwords in NVS; authenticated `/settings` page. Passwords survive firmware updates and Wi-Fi reset.
+- Public first-boot provisioning requires personal passwords before enabling network controls. Private migration preserves existing credentials.
+- Signed GitHub stable updates with HTTPS, ECDSA P-256, SHA-256, board profile and app-header checks, inactive-slot writes, and persisted auto-update permission at `/updates`.
+- Manual check/install, progress and errors, serialized ArduinoOTA/GitHub writes, failed-image retry suppression and application-level trial/fallback.
+- Factory/OTA binary packaging and bilingual installation instructions. See [management and limitations](docs/MANAGEMENT.md).
+
 # 1.0.0 — 2026-09-21
 
 - Unified MQTT clock: receive timestamp and age check use ESPHome millis, preventing false expired_command.

@@ -41,6 +41,7 @@ uint8_t Portal::read(Table table,uint16_t address,uint16_t &value) {
   }return 0;
 }
 uint8_t Portal::write(const Change *changes,size_t count) {
+  if(updates_busy_()||credentials_restart_||!credentials_.configured)return 6;
   haier_bridge::Plan plan{};
   uint8_t error=haier_bridge::plan(changes,count,raw_control_,plan);if(error)return error;
   if(!seen_status_ || !raw_control_valid_ || !climate_->valid_connection() || uint32_t(millis()-last_status_)>10000)return 0x0b;

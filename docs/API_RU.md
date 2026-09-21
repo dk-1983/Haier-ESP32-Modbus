@@ -5,7 +5,7 @@
 - GET `/`: текущее состояние и ссылки.
 - GET `/health`: версия/память/Wi-Fi/OTA/uptime.
 - GET `/haier/status`: свежее состояние, число status, возраст, command_state и request_id.
-- GET `/control`: основной пульт; HTTP Basic `admin`/`ota_password`.
+- GET `/control`: основной пульт; HTTP Basic `admin` / личный веб-пароль.
 - GET `/haier/test-token`: токен текущего запуска, с авторизацией.
 - POST `/haier/control`: token, request_id и target/mode/fan/swing/preset; исходные проверенные функции.
 - POST `/haier/extended`: token, request_id и ровно одно quiet/display=ON|OFF или vertical_position/horizontal_position с именем из пульта.
@@ -18,13 +18,13 @@
 
 HTTP202 означает приём, `command_state=confirmed` — два совпадающих ответа Haier. Общий арбитр не допускает одновременно несколько команд из веба/RTU/TCP. Последний HTTP request_id повторно не отправляет команду; перезапуск очищает эту защиту. Modbus не имеет HTTP request_id и долговременной дедупликации.
 
-OTA: ArduinoOTA UDP8266, пароль из локального secrets.yaml. Для ESP32 используйте espota.py из закреплённого Arduino-ESP32 framework: версия3.3.9 использует свой поддерживаемый механизм аутентификации. Образы ESP8266 несовместимы. Автоматический rollback без отдельной настройки и проверки не обещается.
+OTA: ArduinoOTA UDP8266, личный OTA-пароль, сохранённый в NVS. Для ESP32 используйте espota.py из закреплённого Arduino-ESP32 framework: версия3.3.9 использует свой поддерживаемый механизм аутентификации. Образы ESP8266 несовместимы. Автоматический rollback без отдельной настройки и проверки не обещается.
 
 MQTT: GET `/mqtt` — настройки; GET `/mqtt/config` — конфигурация и диагностика без пароля; POST `/mqtt/config` — token, enabled, host, port, username, password, clear_password и prefix. Все маршруты требуют Basic-аутентификации. Поля и семантика описаны в MQTT.md.
 
 ## Сброс Wi-Fi
 
-GET `/wifi/reset` — страница с подтверждением, доступная через основную LAN и setup AP после Basic-аутентификации. POST `/wifi/reset` требует `token` текущего запуска и `confirm=RESET_WIFI`. Сброс удаляет обе Wi-Fi записи (основную и кандидата), затем отключает STA и открывает `<hostname>-setup` на `192.168.4.1`. Пароль AP берётся из исходного secrets.yaml и не меняется. Это сброс сети, а не стирание всей конфигурации: MQTT/Modbus и пароль управления сохраняются.
+GET `/wifi/reset` — страница с подтверждением, доступная через основную LAN и setup AP после Basic-аутентификации. POST `/wifi/reset` требует `token` текущего запуска и `confirm=RESET_WIFI`. Сброс удаляет обе Wi-Fi записи (основную и кандидата), затем отключает STA и открывает `<hostname>-setup` на `192.168.4.1`. Личный пароль AP в NVS сохраняется. Это сброс сети, а не стирание всей конфигурации: MQTT/Modbus и пароль управления сохраняются.
 
 Успех: HTTP202. Во время незавершённой команды, сканирования, применения новой сети или уже запущенного сброса — HTTP409; при ошибке сохранения — HTTP503. Отключение от сети отложено на 750 мс, чтобы браузер получил ответ. Перезапуск модуля не требуется. Если обычная сеть уже недоступна, существующий механизм восстановления сам открывает setup AP примерно через 60 секунд.
 
@@ -37,3 +37,14 @@ GET `/wifi/reset` — страница с подтверждением, дост
 `GET /about` — защищённая страница диагностики; `/wifi` в LAN показывает состояние сети, в setup AP — настройку. `/health` добавляет min_heap, max_block, fragmentation (приблизительное отношение крупнейшего блока к общему свободному heap), psram_size, free_psram, flash_size; значения памяти в байтах.
 
 `/mqtt/config` добавляет discovery (POST 0/1, GET boolean) и discovery_sent (GET число PUBACK 0..5). Отсутствие discovery в старом POST сохраняет настройку.
+
+## Управление в 1.1.0
+
+Маршруты ниже требуют личный веб-пароль, а POST-запросы — `token` текущего запуска. Первичная установка паролей доступна только через setup AP. См. [руководство](MANAGEMENT_RU.md).
+
+- GET `/settings`, `/settings/status`.
+- POST `/settings/passwords`: `web_password`, `ota_password`, `setup_password`. HTTP 202.
+- GET `/updates`, `/updates/status`.
+- POST `/updates/config`: `enabled=0|1`.
+- POST `/updates/check`. HTTP 202.
+- POST `/updates/install`. HTTP 202; HTTP 409 при отключённых обновлениях.
