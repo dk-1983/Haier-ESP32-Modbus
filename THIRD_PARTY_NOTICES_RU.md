@@ -23,3 +23,5 @@ MIT применяется к независимо созданным файла
 ESP-MQTT — официальный клиент Espressif из ESP-IDF 5.5.4, Apache-2.0; см. LICENSE-ESP-MQTT и https://github.com/espressif/esp-mqtt. Адаптеры MQTT и тесты этого проекта — MIT.
 
 Служба управления и обновлений также использует адаптированные проверки JSON, TLS, подписанного манифеста и OTA из 4VRS-Display по LICENSE-4VRS. У проекта отдельный ключ подписи релизов.
+
+**Основа проекта:** интеграция с протоколом Haier основана на [paveldn/haier-esphome](https://github.com/paveldn/haier-esphome), автор — Pavlo Dudnytskyi. В прошивке используется компонент Haier из ESPHome 2026.6.5 с нашими изменениями и HaierProtocol 0.9.31. Поверх этой основы реализованы наше веб-управление, MQTT-шлюз и интерфейсы Modbus. См. [происхождение кода и лицензии](THIRD_PARTY_NOTICES_RU.md).

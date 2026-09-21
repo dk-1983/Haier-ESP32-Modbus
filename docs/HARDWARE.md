@@ -57,3 +57,9 @@ Two ordinary transistor optocouplers were tested at UART 9600. Communication wor
 Confirmed: 16 MB Flash, 8 MB PSRAM, UART without pull-ups/inversion, local controls and OTA. `gpio17-test.yaml` and `uart-loopback-test.yaml` are diagnostics, not operating AC firmware. Results: [VALIDATION.md](VALIDATION.md).
 
 This is a tested interface prototype, not a finished PCB. Regulator, supply protection, enclosure, connectors, isolation and RS-485 protection need separate design work. GPIO numbers are not air conditioner connector pin numbers.
+
+## Connector ordering reference
+
+The [upstream haier-esphome README](https://github.com/paveldn/haier-esphome#haier-climate) identifies **JST SM04B-GHS-TB** in the ESP32-for-Haier Wi-Fi module context. This is a board-mounted connector; it must not be assumed to identify the indoor-unit motherboard socket shown in our photos.
+
+For that GH connector, the wire-side housing is **GHR-04V-S**, with four **SSHL-002T-P0.2** crimp contacts. GH pitch is **1.25 mm**; see the [JST series catalog](https://www.jst-mfg.com/product/index.php?lang=2&series=105) and [manufacturer datasheet](https://www.jst-mfg.com/product/pdf/eng/eGH.pdf). Before ordering for our motherboard socket, confirm contact pitch and the mating/keying geometry on the original hardware. Its exact mating part number is still unconfirmed; the rendered illustration is not a measurement reference.

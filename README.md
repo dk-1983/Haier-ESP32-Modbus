@@ -16,6 +16,8 @@ For MQTT, you need an ESP32-S3, power supply and UART level conversion, Wi-Fi an
 
 Tested hardware: **ESP32-S3-WROOM-1 N16R8 + Haier AS25HSL1HRA-W**. Other models require UART and protocol compatibility checks.
 
+**Project foundation:** Haier protocol integration is based on [paveldn/haier-esphome](https://github.com/paveldn/haier-esphome) by Pavlo Dudnytskyi. This firmware uses the Haier component from ESPHome 2026.6.5 with local changes and HaierProtocol 0.9.31. Our web management, MQTT bridge and Modbus interfaces build on that foundation. See [provenance and licenses](THIRD_PARTY_NOTICES.md).
+
 ## New in v1.1.0
 
 **[Download the ready-to-flash release](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.1.0)** — factory and OTA binaries for ESP32-S3 N16R8, checksums and [step-by-step installation](docs/FLASHING.md). Compiling the firmware yourself is optional.

@@ -23,3 +23,5 @@ YCJ-A002 numeric register definitions are used for interoperability. Original ma
 ESP-MQTT: official Espressif MQTT client bundled with ESP-IDF 5.5.4, Apache-2.0, see LICENSE-ESP-MQTT and https://github.com/espressif/esp-mqtt. MQTT adapters and tests written for this project are MIT.
 
 The management/update service also adapts JSON validation, TLS, signed-manifest and OTA patterns from 4VRS-Display under LICENSE-4VRS. This project uses its own release signing key.
+
+**Project foundation:** Haier protocol integration is based on [paveldn/haier-esphome](https://github.com/paveldn/haier-esphome) by Pavlo Dudnytskyi. This firmware uses the Haier component from ESPHome 2026.6.5 with local changes and HaierProtocol 0.9.31. Our web management, MQTT bridge and Modbus interfaces build on that foundation. See [provenance and licenses](THIRD_PARTY_NOTICES.md).
