@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <cstdint>
+#include <cstddef>
 
 namespace esphome::haier::hon_protocol {
 
@@ -251,6 +252,6 @@ inline constexpr const char *HON_ALARM_MESSAGES[] = {
     "Firewall failure",
 };
 
-constexpr size_t HON_ALARM_COUNT = sizeof(HON_ALARM_MESSAGES) / sizeof(HON_ALARM_MESSAGES[0]);
+constexpr std::size_t HON_ALARM_COUNT = sizeof(HON_ALARM_MESSAGES) / sizeof(HON_ALARM_MESSAGES[0]);
 
 }  // namespace esphome::haier::hon_protocol
