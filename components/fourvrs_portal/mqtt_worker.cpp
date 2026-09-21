@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "mqtt_client_state.h"
+#include "esphome/core/hal.h"
 #include <Arduino.h>
 #include "Discovery.h"
 #include "version.h"
@@ -24,7 +25,9 @@ static void mqtt_event(void *arg,esp_event_base_t,int32_t id,void *data) {
         if(!e->retain && !strcmp(r.assembly.message.payload,"online"))++r.discovery_request;
         return;
       }
-      r.assembly.message.received_ms=millis();
+      // Queue age is checked with ESPHome time in mqtt_bridge.cpp. Arduino
+      // millis() uses esp_timer, while ESPHome can use FreeRTOS ticks.
+      r.assembly.message.received_ms=esphome::millis();
       if(xQueueSend(r.rx_queue,&r.assembly.message,0)!=pdTRUE)++r.dropped;
     }
   }

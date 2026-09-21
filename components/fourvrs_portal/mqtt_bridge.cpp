@@ -70,7 +70,7 @@ void Portal::mqtt_loop_() {
     const char *field=message.topic+prefix.length();
     uint8_t error=0;const char *reason=nullptr;haier_bridge::Change changes[3]{};size_t count=0;
     if(message.retained)reason="retained_command_rejected";
-    else if(uint32_t(millis()-message.received_ms)>1000)reason="expired_command";
+    else if(uint32_t(esphome::millis()-message.received_ms)>1000)reason="expired_command";
     else error=haier_bridge::mqtt_changes(field,message.payload,changes,count);
     if(!reason && !error)error=write(changes,count);
     if(reason || error){mqtt_last_publish_=0;mqtt_publish_("result",String("{\"status\":\"rejected\",\"field\":")+json_string_(field)+",\"error\":"+String(error)+",\"reason\":"+json_string_(reason?reason:"register_validation")+"}");continue;}
