@@ -12,7 +12,7 @@
 
 For MQTT, you need an ESP32-S3, power supply and UART level conversion, Wi-Fi and an MQTT broker. MAX485 and Moxa are used for the RS-485 option. The web panel provides setup and direct browser control. Modbus installations can use TCP/RTU, the ready-made **Modbus Devices** profile and **4VRS Gateway on Moxa**.
 
-**[Connect using MQTT](#home-assistant-via-mqtt)** · **[Connect using Modbus Devices](#ready-made-home-assistant-integration)** · **[Build the firmware](#build)** · **[Electrical schematic](#electrical-schematic)**
+**[Install the firmware, step by step](docs/FLASHING.md)** · **[Connect using MQTT](#home-assistant-via-mqtt)** · **[Connect using Modbus Devices](#ready-made-home-assistant-integration)** · **[Build the firmware](#build)** · **[Electrical schematic](#electrical-schematic)**
 
 Tested hardware: **ESP32-S3-WROOM-1 N16R8 + Haier AS25HSL1HRA-W**. Other models require UART and protocol compatibility checks.
 
@@ -116,7 +116,9 @@ Target: **ESP32-S3-WROOM-1-N16R8**. Tested AC: **Haier AS25HSL1HRA-W**, UART 960
 
 Validated: ESP32-S3 N16R8, Haier AS25HSL1HRA-W communication through level conversion, web commands confirmed by actual state, and bench RS-485. Fixed memory corruption when copying hOn sensors and a watchdog reset during ArduinoOTA. Results and limits: [VALIDATION.md](docs/VALIDATION.md).
 
-The release contains source code. Build with your own credentials; no firmware image containing individual credentials is published.
+**v1.0.0 is a source-only release: there is no ready-to-flash `.bin` in Assets.** Build with your own setup/web/OTA passwords, then flash the generated factory image.
+
+**[Install the firmware, step by step](docs/FLASHING.md)** — download → passwords → build → USB-UART → BOOT → flash → Wi-Fi → OTA.
 
 <a id="сборка"></a>
 
