@@ -155,14 +155,16 @@ Pinned dependencies: ESPHome 2026.6.5, HaierProtocol 0.9.31. Building does not f
 
 Reference-based illustration of our **AS25HSL1HRA-W** board, viewed from the wire-entry side with `WIFI` below the connector. The adjacent red `CONTROLLER` socket identifies the left side. This is a rendered illustration, not a dimensional drawing. [Original close-up](docs/assets/haier-wifi-connector-photo-7.jpeg) · [Board context](docs/assets/haier-wifi-connector-photo-6.jpeg).
 
-The builder confirmed the signal wires; **TX/RX refer to the Haier board**:
+The builder confirmed the signal and power wires; **TX/RX refer to the Haier board**:
 
 | Wire on this harness | Haier signal | ESP32-S3 connection |
 |---|---|---|
 | White, leftmost in this view | RX | GPIO17 (ESP TX) → Haier RX |
 | Green, second from the left | TX | Haier TX → R2/R3 voltage divider → GPIO18 (ESP RX) |
+| Black, third from the left | Power − / GND | Common circuit ground |
+| Red, rightmost | Power + | Controller power input, before the 3.3 V regulator |
 
-Wire colors describe this particular harness, not a universal Haier pinout. Connect power and ground according to the verified schematic; the photo/render does not establish a connector part number or contact pitch.
+From left to right in this view: **white RX, green TX, black GND, red power +**. The ESP32-S3 supply is 3.3 V from the regulator; the red wire is not connected directly to the module’s 3V3 pin. Wire colors describe this particular harness, not a universal Haier pinout. Connect power and ground according to the verified schematic; the photo/render does not establish a connector part number or contact pitch.
 
 ## Electrical schematic
 
