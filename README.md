@@ -57,6 +57,12 @@ python -m esphome compile haier-s3.yaml
 
 Зависимости закреплены: ESPHome2026.6.5, HaierProtocol0.9.31. Сборка не запускает прошивку устройства. Конфигурация рассчитана на 16MB Flash и8MB octal PSRAM; это не образ для ESP8266 или одноядерного ESP32-S0WD.
 
+## Электрическая схема
+
+![Схема ESP32-S3, UART Haier и MAX485](docs/assets/haier-s3-schematic.png)
+
+[Открыть SVG](docs/assets/haier-s3-schematic.svg) · [Номиналы, проверка пинов и примечания](docs/SCHEMATIC.md). Оба входа RX защищены делителями 10/20 кОм; номера площадок модуля подписаны отдельно от GPIO.
+
 ## Первый запуск
 
 Аппаратное подключение: [HARDWARE.md](docs/HARDWARE.md). После прошивки подключиться к точке `haier-s3-<suffix>-setup` с паролем `setup_password`, открыть `http://192.168.4.1`, выбрать сеть2.4GHz. После получения адреса открыть `/control`. Логин `admin`, пароль — `ota_password` из локального `secrets.yaml` (в этой версии общий для web/OTA).
