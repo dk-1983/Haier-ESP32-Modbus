@@ -83,6 +83,35 @@ Select **Save**. This YAML belongs in the **dashboard card editor**, not Develop
 
 Choose the entity belonging to your device and use it in `entity`. An empty list `[]` means no MQTT climate entity was found; check Discovery and the HA log. If the entity exists but is unavailable, check the broker connection and fresh air conditioner UART data. `discovery_sent: 5` at **the controller's** `/mqtt/config` confirms delivery of five configurations to the broker, not their acceptance by Home Assistant. Sign in there using the ESP web-panel password.
 
+### Room card: sensors and air conditioner together
+
+Use a `vertical-stack` to group a room's switches, temperature and humidity above the Haier thermostat. Paste the entire example into **Edit dashboard → Add card → Manual**.
+
+This example uses the builder's balcony/server-room entities. **Replace switch and sensor IDs with your own**, remove unused rows and check `climate.haier_s3`. These sensors and switches are separate room devices; the Haier firmware does not create them.
+
+```yaml
+type: vertical-stack
+cards:
+  - type: entities
+    title: balcony
+    entities:
+      - entity: switch.tasmota_7
+      - entity: switch.tasmota2_6
+      - entity: sensor.balcony_server_room_themperature_temperature
+      - entity: sensor.balcony_server_room_themperature_humidity
+      - entity: sensor.balcony_server_rack_temperature_temperature
+      - entity: sensor.balcony_server_rack_temperature_humidity
+      - entity: sensor.balcony_server_rack_temperature_2_temperature
+      - entity: sensor.balcony_server_rack_temperature_2_humidity
+      - entity: sensor.measuring_regulator_temperature_1
+
+  - type: thermostat
+    entity: climate.haier_s3
+    name: Haier air conditioner
+```
+
+`entities` and `thermostat` are separate cards inside `cards`. Do not nest `type: thermostat` in the `entities` sensor list. Displaying them together does not change the air conditioner’s temperature source; control using an external sensor requires a separate automation.
+
 MQTT can run alongside Modbus RTU/TCP and the web panel. All interfaces share a command arbiter: while one command awaits confirmation, another may be rejected as `busy`. Send automation commands sequentially, **without retain**.
 
 The firmware publishes actual Haier state and command results. In the current Discovery definitions, Quiet and Display switches use optimistic indication, subsequently corrected by telemetry; other entities do not. A series of **41 MQTT commands** was confirmed by a real air conditioner, and all five Discovery configurations reached the broker. A separate Home Assistant UI test with ESP32-S3 was not part of that series.

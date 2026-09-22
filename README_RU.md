@@ -75,6 +75,35 @@ name: Кондиционер Haier
 
 Выберите сущность нужного устройства и подставьте её в `entity`. Пустой список `[]` означает, что MQTT-климат не найден; проверьте Discovery и журнал HA. Если сущность есть, но состояние «Недоступно», проверьте связь с брокером и свежесть данных UART кондиционера. `discovery_sent: 5` на странице **контроллера** `/mqtt/config` подтверждает доставку пяти конфигураций брокеру, но не их принятие Home Assistant. Для входа на эту страницу используется пароль веб-пульта ESP.
 
+### Карточка комнаты: датчики и кондиционер вместе
+
+Для комнаты удобен общий блок `vertical-stack`: сверху выключатели, температура и влажность, снизу термостат Haier. Вставьте весь пример в **Редактировать панель → Добавить карточку → Вручную**.
+
+Ниже пример для балкона/серверной автора. **Замените идентификаторы выключателей и датчиков на свои**, удалите ненужные строки и проверьте `climate.haier_s3`. Эти датчики и выключатели — отдельные устройства комнаты, прошивка Haier их не создаёт.
+
+```yaml
+type: vertical-stack
+cards:
+  - type: entities
+    title: balcony
+    entities:
+      - entity: switch.tasmota_7
+      - entity: switch.tasmota2_6
+      - entity: sensor.balcony_server_room_themperature_temperature
+      - entity: sensor.balcony_server_room_themperature_humidity
+      - entity: sensor.balcony_server_rack_temperature_temperature
+      - entity: sensor.balcony_server_rack_temperature_humidity
+      - entity: sensor.balcony_server_rack_temperature_2_temperature
+      - entity: sensor.balcony_server_rack_temperature_2_humidity
+      - entity: sensor.measuring_regulator_temperature_1
+
+  - type: thermostat
+    entity: climate.haier_s3
+    name: Кондиционер Haier
+```
+
+`entities` и `thermostat` — две отдельные карточки внутри `cards`. Не вкладывайте `type: thermostat` в список датчиков `entities`. Совместное отображение не меняет источник температуры кондиционера: управление по внешнему датчику требует отдельной автоматизации.
+
 MQTT включается независимо от Modbus RTU/TCP и может работать вместе с ними и веб-пультом. Все интерфейсы используют общий арбитр команд: пока одна команда ожидает подтверждения, следующая может быть отклонена как `busy`. Для своих автоматизаций отправляйте команды последовательно, **без retain**.
 
 Прошивка публикует фактическое состояние Haier и результат выполнения команд. В текущем Discovery переключатели Quiet и Display имеют оптимистичную индикацию, затем уточняемую телеметрией; остальные сущности — без неё. На реальном кондиционере проверена серия из **41 MQTT-команды** с подтверждением и доставка пяти Discovery-конфигураций брокеру. Отдельная проверка интерфейса Home Assistant с ESP32-S3 в эту серию не входила.
