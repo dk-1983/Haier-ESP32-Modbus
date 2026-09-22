@@ -61,6 +61,28 @@ MQTT exposes **all implemented control commands**, including locking, plus telem
 3. Enable **MQTT** and **Home Assistant discovery**, then save. MQTT starts disabled; Discovery is enabled by default.
 4. Once connected, find **Haier S3** in the MQTT integration and add its entities to your dashboard. The controller needs fresh air conditioner data for controls to be available.
 
+### Add the air conditioner dashboard card
+
+MQTT Discovery creates entities; add the dashboard card separately. There is no separate Climate platform to install.
+
+Open **Edit dashboard → Add card → Manual** and paste:
+
+```yaml
+type: thermostat
+entity: climate.haier_s3
+name: Haier air conditioner
+```
+
+Select **Save**. This YAML belongs in the **dashboard card editor**, not Developer Tools Actions or Template, and not `configuration.yaml`.
+
+`climate.haier_s3` is an example confirmed in the builder's installation. Renaming or other devices can change the entity ID. Find it under **Settings → Devices & services → MQTT → Haier S3**, or open **Developer Tools → Template** and run:
+
+```jinja
+{{ integration_entities('mqtt') | select('match', '^climate[.]') | list }}
+```
+
+Choose the entity belonging to your device and use it in `entity`. An empty list `[]` means no MQTT climate entity was found; check Discovery and the HA log. If the entity exists but is unavailable, check the broker connection and fresh air conditioner UART data. `discovery_sent: 5` at **the controller's** `/mqtt/config` confirms delivery of five configurations to the broker, not their acceptance by Home Assistant. Sign in there using the ESP web-panel password.
+
 MQTT can run alongside Modbus RTU/TCP and the web panel. All interfaces share a command arbiter: while one command awaits confirmation, another may be rejected as `busy`. Send automation commands sequentially, **without retain**.
 
 The firmware publishes actual Haier state and command results. In the current Discovery definitions, Quiet and Display switches use optimistic indication, subsequently corrected by telemetry; other entities do not. A series of **41 MQTT commands** was confirmed by a real air conditioner, and all five Discovery configurations reached the broker. A separate Home Assistant UI test with ESP32-S3 was not part of that series.
