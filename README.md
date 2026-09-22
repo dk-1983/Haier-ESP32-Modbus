@@ -174,6 +174,14 @@ From left to right in this view: **white RX, green TX, black GND, red power +**.
 
 [Open SVG](docs/assets/haier-s3-schematic-en.svg) · [Values, verified pins and notes](docs/SCHEMATIC.md). Both RX inputs use 10/20 kΩ dividers; module pad numbers are shown separately from GPIO numbers.
 
+### Optional optical UART
+
+![Optical Haier UART, 9600 bit/s](docs/assets/haier-uart-optical-en.png)
+
+Two PC817C channels replace the direct TX wire and RX divider. Bench communication was confirmed at **9600 bit/s**. At **19200 bit/s Modbus**, the tested optocouplers distorted the rising edge: faster components and renewed verification are required. Full galvanic isolation also requires isolated power.
+
+[Connections, values, SVG and oscilloscope result](docs/OPTICAL-UART.md).
+
 <a id="сборка-для-mqtt-без-rs-485"></a>
 
 ### MQTT build without RS-485

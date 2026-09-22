@@ -1,5 +1,7 @@
 [English](SCHEMATIC.md) | [Русский](SCHEMATIC_RU.md)
 
+Updated optical schematic with **1 kΩ / 2 kΩ** pull-ups, pin verification and 9600/19200 results: [Optical UART](OPTICAL-UART.md). Any 2.2/4.7 kΩ values below describe the initial bench.
+
 <a id="электрическая-схема-макета"></a>
 
 # Prototype electrical schematic

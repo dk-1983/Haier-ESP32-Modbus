@@ -1,5 +1,7 @@
 [English](HARDWARE.md) | [Русский](HARDWARE_RU.md)
 
+Updated optical schematic with **1 kΩ / 2 kΩ** pull-ups, pin verification and 9600/19200 results: [Optical UART](OPTICAL-UART.md). Any 2.2/4.7 kΩ values below describe the initial bench.
+
 <a id="стенд-esp32-s3-wroom-1-n16r8"></a>
 
 # ESP32-S3-WROOM-1 N16R8 bench hardware

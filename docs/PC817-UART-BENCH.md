@@ -1,5 +1,7 @@
 [English](PC817-UART-BENCH.md) | [Русский](PC817-UART-BENCH_RU.md)
 
+Updated optical schematic with **1 kΩ / 2 kΩ** pull-ups, pin verification and 9600/19200 results: [Optical UART](OPTICAL-UART.md). Any 2.2/4.7 kΩ values below describe the initial bench.
+
 # Two PC817 channels for Haier UART — bench option
 
 Initial status: proposed, not yet assembled/validated (later bench update below). 9600 8N1. Powering ESP from Haier through an ordinary regulator shares ground: this is optical signal transfer and level conversion, NOT full galvanic isolation. Overload of the older ESP8266 GPIO was not proven; successful communication does not make 5 V acceptable on its GPIO.

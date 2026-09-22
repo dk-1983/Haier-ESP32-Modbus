@@ -1,5 +1,7 @@
 [English](HARDWARE.md) | [Русский](HARDWARE_RU.md)
 
+Актуальная оптическая схема с подтяжками **1 кОм / 2 кОм**, проверкой выводов и результатами 9600/19200: [Оптический UART](OPTICAL-UART_RU.md). Значения 2,2/4,7 кОм ниже, если указаны, относятся к первоначальному стенду.
+
 # Стенд ESP32-S3-WROOM-1 N16R8
 
 Это конфигурация нового модуля ESP32-S3, а не заводского одноядерного ESP32-for-Haier. Нужны питание3.3V, общая земля, цепь EN/BOOT и UART-программатор с логикой3.3V. Модуль не имеет входа5V; схему питания сверяйте с [Espressif](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html).
