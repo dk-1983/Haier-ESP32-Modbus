@@ -63,9 +63,9 @@ MQTT exposes **all implemented control commands**, including locking, plus telem
 
 ### Add the air conditioner dashboard card
 
-MQTT Discovery creates entities; add the dashboard card separately. There is no separate Climate platform to install.
+Once MQTT Discovery is enabled, Home Assistant automatically creates the Haier entities, including a climate entity with standard controls. Open **Settings → Devices & services → MQTT → Haier S3** and select the climate entity to control the air conditioner. **No manual entity creation, YAML or separate Climate platform installation is needed to get started.**
 
-Open **Edit dashboard → Add card → Manual** and paste:
+**Optional:** to place a separate thermostat on your own dashboard, open **Edit dashboard → Add card → Manual** and paste:
 
 ```yaml
 type: thermostat
@@ -75,7 +75,7 @@ name: Haier air conditioner
 
 Select **Save**. This YAML belongs in the **dashboard card editor**, not Developer Tools Actions or Template, and not `configuration.yaml`.
 
-`climate.haier_s3` is an example confirmed in the builder's installation. Renaming or other devices can change the entity ID. Find it under **Settings → Devices & services → MQTT → Haier S3**, or open **Developer Tools → Template** and run:
+`climate.haier_s3` is an example confirmed in the builder's installation. Renaming or other devices can change the entity ID. Find it under **Settings → Devices & services → MQTT → Haier S3**, or, only if you need to check the list of MQTT climate entities, open **Developer Tools → Template** and run:
 
 ```jinja
 {{ integration_entities('mqtt') | select('match', '^climate[.]') | list }}
@@ -85,7 +85,7 @@ Choose the entity belonging to your device and use it in `entity`. An empty list
 
 ### Room card: sensors and air conditioner together
 
-Use a `vertical-stack` to group a room's switches, temperature and humidity above the Haier thermostat. Paste the entire example into **Edit dashboard → Add card → Manual**.
+**Optional dashboard layout, not a required MQTT setup step.** Use a `vertical-stack` to group a room's switches, temperature and humidity above the Haier thermostat. Paste the entire example into **Edit dashboard → Add card → Manual**.
 
 This example uses the builder's balcony/server-room entities. **Replace switch and sensor IDs with your own**, remove unused rows and check `climate.haier_s3`. These sensors and switches are separate room devices; the Haier firmware does not create them.
 
