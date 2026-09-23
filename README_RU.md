@@ -201,9 +201,11 @@ python -m esphome compile haier-s3.yaml
 
 ## Электрическая схема
 
-![Схема ESP32-S3, UART Haier и MAX485](docs/assets/haier-s3-schematic.png)
+Электрическая схема **rev1.0** включает подтяжку GPIO21 к земле, отключаемый терминатор 120 Ом и площадки программатора. Плата ожидает сборки и аппаратной проверки; разводка и Gerber пока не публикуются.
 
-[Открыть SVG](docs/assets/haier-s3-schematic.svg) · [Номиналы, проверка пинов и примечания](docs/SCHEMATIC_RU.md). Оба входа RX защищены делителями 10/20 кОм; номера площадок модуля подписаны отдельно от GPIO.
+![Схема ESP32-S3, UART Haier и MAX485](docs/assets/haier-schematic-rev1.0.png)
+
+[Открыть SVG](docs/assets/haier-schematic-rev1.0.svg) · [Номиналы, проверка пинов и примечания](docs/SCHEMATIC_RU.md). Оба входа RX защищены делителями 10/20 кОм; номера площадок модуля подписаны отдельно от GPIO.
 
 ### Оптический UART — дополнительный вариант
 

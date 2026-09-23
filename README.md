@@ -221,9 +221,11 @@ From left to right in this view: **white RX, green TX, black GND, red power +**.
 
 ## Electrical schematic
 
-![ESP32-S3, Haier UART and MAX485 schematic](docs/assets/haier-s3-schematic-en.png)
+Electrical schematic **rev1.0** includes the GPIO21 pull-down, switchable 120 Ω termination and programming pads. The PCB is awaiting assembly and hardware validation; layout and Gerber files are not published yet.
 
-[Open SVG](docs/assets/haier-s3-schematic-en.svg) · [Values, verified pins and notes](docs/SCHEMATIC.md). Both RX inputs use 10/20 kΩ dividers; module pad numbers are shown separately from GPIO numbers.
+![ESP32-S3, Haier UART and MAX485 schematic](docs/assets/haier-schematic-rev1.0.png)
+
+[Open SVG](docs/assets/haier-schematic-rev1.0.svg) · [Values, verified pins and notes](docs/SCHEMATIC.md). Both RX inputs use 10/20 kΩ dividers; module pad numbers are shown separately from GPIO numbers.
 
 ### Optional optical UART
 

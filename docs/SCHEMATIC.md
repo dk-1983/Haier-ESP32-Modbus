@@ -1,5 +1,19 @@
 [English](SCHEMATIC.md) | [Русский](SCHEMATIC_RU.md)
 
+## Updated electrical schematic — rev1.0
+
+![Electrical schematic rev1.0](assets/haier-schematic-rev1.0.png)
+
+[Open / download SVG](assets/haier-schematic-rev1.0.svg) · [PNG](assets/haier-schematic-rev1.0.png)
+
+This is the current electrical design for the planned v1.0 board. It includes both 10 kΩ / 20 kΩ RX dividers, the GPIO21 10 kΩ pull-down, R7 (120 Ω) with the normally open JP1 termination jumper, J2 (RS-485 A/B), parallel solder pads TP7/TP8, UART0 programming pads and EN/BOOT buttons. C1 is 220 µF / 10 V and C3 is 100 µF / 10 V; both use tantalum case C (6032-28). C2/C4/C5/C6 are 100 nF / 50 V. J1 is JST SM04B-GHS-TB: pins 1–4 are +5 V, GND, Haier TX, Haier RX.
+
+Identical net labels indicate electrical connections. H_TX = GPIO17 → Haier RX; H_RX = divided Haier TX → GPIO18. MB_TX = GPIO15 → MAX485 DI; MB_RX = divided MAX485 RO → GPIO16; DIR = GPIO21 → DE and /RE. TP6 (+3V3) is a voltage measurement point, not a separate power input.
+
+For an MQTT-only build, the optional RS-485 section comprises U3, R4–R7, C6, JP1, J2 and TP7/TP8. Keep the Haier UART dividers and power circuit.
+
+The schematic passed KiCad ERC with zero errors and warnings. The v1.0 PCB has **not yet been assembled and tested**. PCB layout, manufacturing files and Gerbers will remain unpublished until the author's hardware validation. J2's physical part selection is still pending; its circuit connections are defined here. The earlier bench schematic and its notes are retained below for reference.
+
 Updated optical schematic with **1 kΩ / 2 kΩ** pull-ups, pin verification and 9600/19200 results: [Optical UART](OPTICAL-UART.md). Any 2.2/4.7 kΩ values below describe the initial bench.
 
 <a id="электрическая-схема-макета"></a>
