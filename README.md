@@ -304,3 +304,5 @@ At `/modbus`, enable RTU/TCP and choose Unit ID and RTU baud rate. TCP listens o
 Working release for the tested Haier AS25HSL1HRA-W and ESP32-S3 N16R8. Other models require protocol and electrical checks. Equivalence of nonzero fault codes to YCJ-A002 is unverified. The project does not replace the air conditioner's protective functions.
 
 [v1.1.0 acceptance checks](docs/VALIDATION-1.1.0.md)
+
+v1.3.0: [MQTT telemetry and server-room controller contract](docs/MQTT_TELEMETRY.md) adds observation freshness and AC fault discovery. See release notes for hardware validation status.

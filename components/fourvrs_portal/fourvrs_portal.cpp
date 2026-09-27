@@ -8,6 +8,7 @@
 #include "SettingsPage.h"
 #include "WifiInfoPage.h"
 #include <esp_heap_caps.h>
+#include <esp_timer.h>
 #include "version.h"
 #include <cmath>
 
@@ -69,6 +70,7 @@ void Portal::status_received(const char *data, size_t size) {
   if (raw_control_valid_) memcpy(&raw_control_, data + 2, sizeof(raw_control_));
   raw_sensors_valid_ = copy_status_sensors(raw_sensors_, data, size);
   seen_status_ = true; last_status_ = millis(); ++status_count_;
+  status_uptime_ms_ = uint64_t(esp_timer_get_time()) / 1000;
   last_payload_ = format_hex_pretty(reinterpret_cast<const uint8_t *>(data), size).c_str();
   if (test_pending_ && status_count_ > test_frame_) {
     if (command_matches_()) {

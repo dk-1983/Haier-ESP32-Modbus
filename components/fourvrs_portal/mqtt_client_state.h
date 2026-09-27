@@ -11,7 +11,7 @@ struct MqttConfig {
   uint32_t magic{0x484d5101};uint16_t port{1883};uint8_t enabled{0},discovery_disabled{0};
   char host[128]{},username[65]{},password[129]{},prefix[65]{};
 };
-struct MqttPublish {char topic[128]{};char payload[1536]{};uint32_t epoch{0};bool state{false};};
+struct MqttPublish {char topic[128]{};char payload[1536]{};uint32_t epoch{0},queued_ms{0};bool state{false},telemetry{false};};
 // Worker owns the MQTT handle and all blocking library calls; loop() only uses queues.
 struct MqttRuntime {
   QueueHandle_t config_queue{nullptr},rx_queue{nullptr},tx_queue{nullptr};

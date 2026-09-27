@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 #include "fourvrs_portal.h"
 #include "MqttPage.h"
+#include "mqtt_telemetry.h"
+#include <esp_system.h>
+#include <esp_timer.h>
 namespace esphome::fourvrs_portal {
 void mqtt_worker_task(void *arg);
 static bool valid_config(const MqttConfig &c) {
@@ -9,6 +12,9 @@ static bool valid_config(const MqttConfig &c) {
   return haier_bridge::mqtt_prefix(c.prefix) && (!c.host[0]? !c.enabled : haier_bridge::mqtt_host(c.host));
 }
 void Portal::mqtt_setup_() {
+  char boot[33];
+  snprintf(boot,sizeof(boot),"%08lx%08lx%08lx%08lx",(unsigned long)esp_random(),(unsigned long)esp_random(),(unsigned long)esp_random(),(unsigned long)esp_random());
+  mqtt_boot_id_=boot;
   mqtt_pref_=global_preferences->make_preference<MqttConfig>(0x484d5101,true);
   hostname_.toCharArray(mqtt_config_.prefix,sizeof(mqtt_config_.prefix));
   hostname_.toCharArray(mqtt_runtime_.client_id,sizeof(mqtt_runtime_.client_id));
@@ -53,7 +59,7 @@ void Portal::mqtt_web_() {
 }
 bool Portal::mqtt_publish_(const char *suffix,const String &body) {
   if(!mqtt_config_.enabled || !mqtt_runtime_.task || mqtt_runtime_.applying || !mqtt_runtime_.connected || body.length()>=sizeof(MqttPublish::payload))return false;
-  MqttPublish publish{};publish.state=!strcmp(suffix,"state");publish.epoch=mqtt_runtime_.state_epoch.load();snprintf(publish.topic,sizeof(publish.topic),"%s/%s",mqtt_config_.prefix,suffix);body.toCharArray(publish.payload,sizeof(publish.payload));
+  MqttPublish publish{};publish.queued_ms=millis();publish.telemetry=!strcmp(suffix,"telemetry");publish.state=!strcmp(suffix,"state");publish.epoch=mqtt_runtime_.state_epoch.load();snprintf(publish.topic,sizeof(publish.topic),"%s/%s",mqtt_config_.prefix,suffix);body.toCharArray(publish.payload,sizeof(publish.payload));
   if(xQueueSend(mqtt_runtime_.tx_queue,&publish,0)!=pdTRUE){++mqtt_runtime_.dropped;return false;}return true;
 }
 void Portal::mqtt_loop_() {
@@ -79,6 +85,21 @@ void Portal::mqtt_loop_() {
   }
   uint32_t now=millis(),connections=mqtt_runtime_.connections.load();
   if(!mqtt_runtime_.connected){mqtt_last_publish_=0;return;}
+  // Independent observation stream remains live while command confirmation is pending.
+  // A new accepted UART frame is published promptly; unchanged observations get a heartbeat.
+  if(telemetry_due(now,mqtt_last_telemetry_,connections!=mqtt_telemetry_connections_,status_count_!=mqtt_telemetry_frame_)){
+    String body=climate_status_(false);
+    body.remove(body.length()-1);
+    body+=",\"schema\":1,\"boot_id\":"+json_string_(mqtt_boot_id_);
+    char times[128];
+    snprintf(times,sizeof(times),",\"published_uptime_ms\":%llu,\"sample_uptime_ms\":%llu",(unsigned long long)(uint64_t(esp_timer_get_time())/1000),(unsigned long long)status_uptime_ms_);
+    body+=times;
+    bool valid=telemetry_fault_valid(seen_status_,climate_->valid_connection(),uint32_t(now-last_status_),raw_sensors_valid_);
+    body+=",\"fault_valid\":"+String(valid ? "true":"false");
+    body+=",\"fault\":"+(valid ? String(raw_sensors_.error_status!=0 ? "true":"false") : String("null"));
+    body+=",\"fault_code\":"+(valid ? String(raw_sensors_.error_status) : String("null"))+"}";
+    if(mqtt_publish_("telemetry",body)){mqtt_last_telemetry_=now;mqtt_telemetry_connections_=connections;mqtt_telemetry_frame_=status_count_;}
+  }
   if(test_pending_)return;
   if(!mqtt_last_publish_ || connections!=mqtt_seen_connections_ || uint32_t(now-mqtt_last_publish_)>=5000){
     if(mqtt_publish_("state",climate_status_(false))){mqtt_last_publish_=now;mqtt_seen_connections_=connections;}

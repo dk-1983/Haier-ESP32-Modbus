@@ -47,12 +47,12 @@ static void stop_client(MqttRuntime &r) {
 void mqtt_worker_task(void *arg) {
   auto &r=*static_cast<MqttRuntime *>(arg);uint32_t retry_at=0;
   uint32_t discovery_seen=0,discovery_at=0,connection_seen=0;
-  unsigned discovery_step=5;int discovery_id=-1;
+  unsigned discovery_step=8;int discovery_id=-1;
   for(;;){
     MqttConfig next;
-    if(xQueueReceive(r.config_queue,&next,pdMS_TO_TICKS(20))==pdTRUE){stop_client(r);discovery_id=-1;discovery_step=5;r.active=next;retry_at=0;r.applying=false;}
+    if(xQueueReceive(r.config_queue,&next,pdMS_TO_TICKS(20))==pdTRUE){stop_client(r);discovery_id=-1;discovery_step=8;r.active=next;retry_at=0;r.applying=false;}
     bool should_run=r.active.enabled && WiFi.status()==WL_CONNECTED;
-    if(!should_run){stop_client(r);discovery_id=-1;discovery_step=5;continue;}
+    if(!should_run){stop_client(r);discovery_id=-1;discovery_step=8;continue;}
     if(!r.client){
       if(retry_at && uint32_t(millis()-retry_at)<5000)continue;
       retry_at=millis();
@@ -86,10 +86,10 @@ void mqtt_worker_task(void *arg) {
     if(r.connected && discovery_id<0 && discovery_seen!=r.discovery_request.load()){
       discovery_seen=r.discovery_request.load();discovery_step=0;r.discovery_acked=0;
     }
-    if(r.connected && !r.active.discovery_disabled && discovery_id<0 && discovery_step<5){
-      const char *templates[]={DISCOVERY_0,DISCOVERY_1,DISCOVERY_2,DISCOVERY_3,DISCOVERY_4};
-      const char *kinds[]={"climate","switch","switch","select","select"};
-      const char *entities[]={"climate","quiet","display","vertical_position","horizontal_position"};
+    if(r.connected && !r.active.discovery_disabled && discovery_id<0 && discovery_step<8){
+      const char *templates[]={DISCOVERY_0,DISCOVERY_1,DISCOVERY_2,DISCOVERY_3,DISCOVERY_4,DISCOVERY_5,DISCOVERY_6,DISCOVERY_7};
+      const char *kinds[]={"climate","switch","switch","select","select","sensor","binary_sensor","sensor"};
+      const char *entities[]={"climate","quiet","display","vertical_position","horizontal_position","telemetry","fault","fault_code"};
       String body=FPSTR(templates[discovery_step]);
       body.replace("@BASE@",r.active.prefix);body.replace("@ID@",r.client_id);
       body.replace("@IP@",WiFi.localIP().toString());body.replace("@VERSION@",HAIER_FIRMWARE_VERSION);
@@ -102,8 +102,17 @@ void mqtt_worker_task(void *arg) {
     MqttPublish publish;
     // Bound per-iteration work and never queue stale telemetry while disconnected.
     for(unsigned i=0;i<4 && xQueueReceive(r.tx_queue,&publish,0)==pdTRUE;++i){
+      // Never deliver old observations accumulated in our worker queue.
+      if(publish.telemetry && uint32_t(esphome::millis()-publish.queued_ms)>250){++r.dropped;continue;}
       if(publish.state && (r.state_pending.load() || publish.epoch!=r.state_epoch.load()))continue;
-      if(r.connected && esp_mqtt_client_enqueue(r.client,publish.topic,publish.payload,0,0,0,true)<0)++r.dropped;
+      if(r.connected){
+        // QoS0 enqueue(store=false) does not transmit in ESP-IDF. Send observations
+        // directly from this I/O worker, never from the UART/application loop.
+        int result=publish.telemetry
+          ? esp_mqtt_client_publish(r.client,publish.topic,publish.payload,0,0,0)
+          : esp_mqtt_client_enqueue(r.client,publish.topic,publish.payload,0,0,0,true);
+        if(result<0)++r.dropped;
+      }
     }
   }
 }

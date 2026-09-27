@@ -37,6 +37,9 @@ class Portal : public Component, public haier_bridge::Backend {
   MqttConfig mqtt_config_{};MqttRuntime mqtt_runtime_{};ESPPreferenceObject mqtt_pref_;
   uint32_t mqtt_last_publish_{0},mqtt_seen_connections_{0},mqtt_command_count_{0};
   String mqtt_pending_id_;
+  String mqtt_boot_id_;
+  uint64_t status_uptime_ms_{0};
+  uint32_t mqtt_last_telemetry_{0}, mqtt_telemetry_connections_{0}, mqtt_telemetry_frame_{0};
   void mqtt_state_changed_(bool pending);
   void mqtt_setup_();void mqtt_web_();void mqtt_loop_();String mqtt_json_();
   bool mqtt_publish_(const char *suffix,const String &body);
