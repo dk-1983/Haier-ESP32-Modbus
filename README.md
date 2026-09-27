@@ -29,7 +29,7 @@ The factory app continues to use its own service; local MQTT, Modbus and web con
 
 For a Wi-Fi-only build, leave out the MAX485/RS-485 section. Both arrangements need ESP32-S3 power and UART level conversion according to the appropriate schematic. The bridge arrangement also needs the factory-module UART connection.
 
-**[Modbus Devices setup](#ready-made-home-assistant-integration)** · **[How the UART bridge works](docs/UART_BRIDGE.md)** · **[MQTT setup](#home-assistant-via-mqtt)** · **[Flash the firmware](docs/FLASHING.md)** · **[Bridge schematic](docs/assets/haier-uart-bridge-schematic.svg)** · **[v1.1.0 schematic](#electrical-schematic)**
+**[Modbus Devices setup](#ready-made-home-assistant-integration)** · **[How the UART bridge works](docs/UART_BRIDGE.md)** · **[MQTT setup](#home-assistant-via-mqtt)** · **[Flash the firmware](docs/FLASHING.md)** · **[Bridge schematic](docs/assets/haier-uart-bridge-schematic.svg)** · **[Electrical schematic](#electrical-schematic)**
 
 Tested hardware: **ESP32-S3-WROOM-1 N16R8 + Haier AS25HSL1HRA-W**. Other models require UART and protocol compatibility checks.
 
@@ -241,11 +241,17 @@ From left to right in this view: **white RX, green TX, black GND, red power +**.
 
 ## Electrical schematic
 
-Electrical schematic **rev1.0** includes the GPIO21 pull-down, switchable 120 Ω termination and programming pads. The PCB is awaiting assembly and hardware validation; layout and Gerber files are not published yet.
+The current **v1.2.0 UART bridge schematic** keeps the main-board UART on GPIO17/18 and adds the factory Wi-Fi UART on GPIO16/15. RS-485 moves to GPIO9/8; direction control stays on GPIO21.
 
-![ESP32-S3, Haier UART and MAX485 schematic](docs/assets/haier-schematic-rev1.0.png)
+![Haier circuit schematic: ESP32-S3, factory Wi-Fi and MAX485](docs/assets/haier-uart-bridge-schematic.png)
 
-[Open SVG](docs/assets/haier-schematic-rev1.0.svg) · [Values, verified pins and notes](docs/SCHEMATIC.md). Both RX inputs use 10/20 kΩ dividers; module pad numbers are shown separately from GPIO numbers.
+[Open full-size SVG](docs/assets/haier-uart-bridge-schematic.svg) · [Wiring, bridge operation and test results](docs/UART_BRIDGE.md).
+
+The drawing includes 10/20 kΩ dividers on all three RX inputs, the GPIO21 pull-down, switchable 120 Ω RS-485 termination and programming UART. External-device TX/RX labels refer to those devices. Connect factory Wi-Fi through our ESP; do not connect its TX in parallel with the main-board TX.
+
+**This is a new circuit schematic, not a new PCB layout.** The ordered **rev1.0** board remains unchanged: its RS-485 traces use GPIO15/16 and must be rerouted for v1.2.0 before connecting factory Wi-Fi. Physical RS-485 verification on GPIO8/9 awaits the MAX485 board; layout and Gerber files remain unpublished.
+
+Previous bridge-free wiring for **v1.1.0**: [rev1.0 SVG](docs/assets/haier-schematic-rev1.0.svg) · [Values and notes](docs/SCHEMATIC.md).
 
 ### Optional optical UART
 
@@ -259,9 +265,9 @@ Two PC817C channels replace the direct TX wire and RX divider. Bench communicati
 
 ### MQTT build without RS-485
 
-**For Home Assistant over MQTT, you can omit the entire “03 RS-485” section.** Do not install **U3 (MAX485), R4, R5, R6**, the local MAX485 supply capacitor or A/B connector. Connections from that section to GPIO15, GPIO16 and GPIO21 are unnecessary.
+**For Home Assistant over MQTT, omit the MAX485/RS-485 circuit if you do not need it.** In the new schematic this means U3, divider R6/R7, pull-down R8, termination R9 with JP1, capacitor C4 and the A/B connector. Its connections to GPIO8, GPIO9 and GPIO21 are unnecessary.
 
-Keep the ESP32-S3, supply, EN/BOOT circuits and Haier UART: **GPIO17 → Haier RX**, **Haier TX → R2/R3 divider → GPIO18**, and common ground. **Keep R2 and R3**: they convert the air conditioner's input signal level and are not part of RS-485.
+Keep ESP32-S3 power, EN/BOOT and the Haier UART: **GPIO17 → Haier RX**, **Haier TX → R4/R5 divider → GPIO18**, and common ground. To preserve factory Wi-Fi, also keep **GPIO16 → module RX** and **module TX → R3/R2 divider → GPIO15**. Retain both Haier UART dividers. Component references here belong to the new bridge schematic.
 
 Use the same main `haier-s3.yaml` firmware; no separate build is needed. Leave **RTU disabled** at `/modbus`, and enable MQTT/Discovery at `/mqtt`. The web panel and OTA remain available. **Modbus TCP over Wi-Fi also works without MAX485** if you later choose Modbus Devices.
 
