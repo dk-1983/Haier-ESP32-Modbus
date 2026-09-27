@@ -1,6 +1,6 @@
 [English](CHANGELOG.md) | [Русский](CHANGELOG_RU.md)
 
-# 1.2.0 — Unreleased
+# 1.2.0 — 2026-09-27
 
 - New signed update profile v2 prevents automatic pinout migration from v1.1.0; first upgrade is manual after checking GPIO15/16 wiring.
 
@@ -8,7 +8,7 @@
 - Modbus moved to RX8/TX9; direction GPIO21 and existing register map unchanged. Rev1.0 RS-485 wiring requires adaptation.
 - Bounded checksum/CRC-validated recovery of missing/extra main-board delimiters; UART diagnostics and regression tests.
 - Hardware coexistence and disconnect/reconnect checks documented in [UART_BRIDGE.md](docs/UART_BRIDGE.md). New-pin RS-485 verification deferred.
-- Bilingual bridge schematic and README focused on retained factory controls, Modbus Devices and MQTT. Public release binaries are not yet available.
+- Bilingual bridge schematic and README focused on retained factory controls, Modbus Devices and MQTT. Public factory/OTA binaries built in clean CI and verified on the operating Haier controller; see [public-image acceptance](docs/VALIDATION-1.2.0.md).
 
 # 1.1.0 — 2026-09-22
 

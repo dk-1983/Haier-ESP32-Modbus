@@ -1,8 +1,8 @@
 [English](UART_BRIDGE.md) | [Русский](UART_BRIDGE_RU.md)
 
-# Factory Wi-Fi inline UART bridge (development)
+# Factory Wi-Fi inline UART bridge
 
-The `1.2.0` source adds a third UART so the ESP32 can sit between the indoor main board and the original Haier Wi-Fi module. The intended result is factory functionality plus our web controls, MQTT and Modbus. **The 30-minute coexistence run and physical factory-module removal/return tests passed on our Haier setup; see the current results below.** This is not a stable release or a claim of support for every factory function.
+The `1.2.0` source adds a third UART so the ESP32 can sit between the indoor main board and the original Haier Wi-Fi module. The intended result is factory functionality plus our web controls, MQTT and Modbus. **The 30-minute coexistence run and physical factory-module removal/return tests passed on our Haier setup; see the current results below.** This does not establish support for every factory function or Haier model.
 
 The architecture follows our [Samsung inline bridge](https://github.com/dk-1983/Samsung-ESP32-MQTT-Modbus). The packet decoder and arbitration here are specific to Haier hOn / HaierProtocol 0.9.31; Samsung packet counters and registers are not reused. Existing Haier Modbus addresses, MQTT topics/discovery and control semantics are retained.
 
@@ -15,7 +15,7 @@ Tested development image: `6a6ca7fb0ff119ab20f09670e3441d4e`, ESP32-S3 N16R8, Ha
 - **Factory-module return:** automatically detected without resetting ESP. During 20 seconds of observation, 32 factory frames and 36 main-board frames were received; all four local requests received replies, with fresh appliance state and MQTT connectivity.
 - **Switching observations:** factory-side parser count was 1 at the first removal check and 4 at the first reconnection check; the saved invalid byte was `00`. Neither observation period increased that count; main-board parser errors and timeouts remained zero. No immediately preceding measurement establishes the exact time or physical cause of those bytes.
 
-The bridge fallback and return are now physically verified on this setup. This does not certify every factory function or model. Physical RS-485 on the new GPIO8/9 pins is deferred until the MAX485 board arrives. Public CI binaries still need production and final acceptance; no v1.2.0 release is published. Earlier sections below retain the diagnostic history, not the current acceptance status.
+The bridge fallback and return are now physically verified on this setup. This does not certify every factory function or model. Physical RS-485 on the new GPIO8/9 pins is deferred until the MAX485 board arrives. The public CI binary passed final command checks; see [v1.2.0 acceptance](VALIDATION-1.2.0.md). Earlier sections below retain the diagnostic history, not the current acceptance status.
 
 
 ## One firmware, two connection arrangements

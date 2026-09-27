@@ -10,7 +10,7 @@
 
 The new **transparent UART bridge in development v1.2.0** places our ESP32-S3 between the indoor unit's main board and its original Wi-Fi module. The factory module stays in the system: the bridge forwards its UART exchanges and coordinates our own requests alongside them. This lets you add local control while retaining the equipment's original control path.
 
-**Release status:** v1.2.0 has passed the 30-minute bridge run and physical factory-module removal/return checks on our installation; public release preparation is still pending. The downloadable **v1.1.0** works as a replacement for the original Wi-Fi module; it does **not** include the new inline bridge. Choose the wiring for the firmware you install.
+**Version v1.2.0:** the inline UART bridge retains factory Wi-Fi connectivity and adds local control. Ready-to-flash factory/OTA binaries, wiring and instructions are available in the [release](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.2.0). Check the changed RS-485 pinout before upgrading from v1.1.0; the main-board GPIO17/18 wiring is unchanged.
 
 ## Factory functionality, with more ways to control it
 
@@ -35,11 +35,15 @@ Tested hardware: **ESP32-S3-WROOM-1 N16R8 + Haier AS25HSL1HRA-W**. Other models 
 
 **Project foundation:** Haier protocol integration is based on [paveldn/haier-esphome](https://github.com/paveldn/haier-esphome) by Pavlo Dudnytskyi. This firmware uses the Haier component from ESPHome 2026.6.5 with local changes and HaierProtocol 0.9.31. Our web management, MQTT bridge and Modbus interfaces build on that foundation. See [provenance and licenses](THIRD_PARTY_NOTICES.md).
 
-**Development source (`1.2.0`, not a published release):** an automatic [factory Wi-Fi UART bridge](docs/UART_BRIDGE.md) is being added. GPIO17/18 remain unchanged; Modbus moves to RX8/TX9 (DE21 unchanged). The stable v1.1.0 release and ordered rev1.0 PCB use the original wiring. The 30-minute coexistence test and automatic fallback/return passed. Physical RS-485 on the new pins remains deferred; [acceptance details](docs/UART_BRIDGE.md#current-hardware-results--2026-09-27).
+**Verified on our installation:** 30-minute coexistence, automatic direct polling without the factory module and automatic bridge return. The public binary was separately exercised through MQTT, web controls and Modbus TCP. Physical RS-485 on GPIO8/9 awaits the MAX485 board. [Results and limitations](docs/VALIDATION-1.2.0.md).
 
-## New in v1.1.0
+## New in v1.2.0
 
-**[Download the ready-to-flash release](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.1.0)** — factory and OTA binaries for ESP32-S3 N16R8, checksums and [step-by-step installation](docs/FLASHING.md). Compiling the firmware yourself is optional.
+**[Download the ready-to-flash release](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.2.0)** — factory and OTA binaries for ESP32-S3 N16R8, checksums and [step-by-step installation](docs/FLASHING.md). Compiling the firmware yourself is optional.
+
+- **Factory Wi-Fi stays connected:** the new UART bridge links the Haier main board and original module; local controls complement factory control. Without the factory module, firmware falls back to direct polling.
+- **Existing integrations retained:** Modbus registers, MQTT and Home Assistant discovery remain compatible; Modbus Devices provides a ready-made device profile.
+- **Updated wiring:** Haier TX17/RX18; factory Wi-Fi TX16/RX15; Modbus TX9/RX8 and DE21. The first upgrade from v1.1.0 is manual after a wiring check; signed update profile v2 prevents automatic pinout migration.
 
 - **Personal passwords from the browser:** change web access, ArduinoOTA and setup Wi-Fi passwords independently on `/settings`. Existing provisioned passwords and settings survive firmware updates; new public installations ask you to create personal passwords first.
 - **Updates directly from GitHub:** the controller checks for new stable releases and can install them automatically. Enable or disable installation, check for a release or start an update from `/updates`.
@@ -199,7 +203,7 @@ Target: **ESP32-S3-WROOM-1-N16R8**. Tested AC: **Haier AS25HSL1HRA-W**, UART 960
 
 Validated: ESP32-S3 N16R8, Haier AS25HSL1HRA-W communication through level conversion, web commands confirmed by actual state, and bench RS-485. Fixed memory corruption when copying hOn sensors and a watchdog reset during ArduinoOTA. Results and limits: [VALIDATION.md](docs/VALIDATION.md).
 
-**[v1.1.0 includes ready-to-flash binaries](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.1.0)** for ESP32-S3 N16R8: `-factory.bin` for first USB-UART installation at 0x0 and `-ota.bin` for ArduinoOTA. No compilation is required. The public image asks you to set personal passwords on first boot. [Password changes and GitHub auto-updates](docs/MANAGEMENT.md) are available in the web interface. v1.0.0 remains source-only.
+**[v1.2.0 includes ready-to-flash binaries](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.2.0)** for ESP32-S3 N16R8: `-factory.bin` for first USB-UART installation at 0x0 and `-ota.bin` for ArduinoOTA. No compilation is required. The public image asks you to set personal passwords on first boot. [Password changes and GitHub auto-updates](docs/MANAGEMENT.md) are available in the web interface. v1.0.0 remains source-only.
 
 **[Install the firmware, step by step](docs/FLASHING.md)** — download binary → USB-UART → BOOT → flash → personal passwords → Wi-Fi → OTA.
 
@@ -275,7 +279,7 @@ Use the same main `haier-s3.yaml` firmware; no separate build is needed. Leave *
 
 ## First start
 
-Hardware connections: [HARDWARE.md](docs/HARDWARE.md). After flashing, join `haier-s3-<suffix>-setup` using `Haier-Setup` for a fresh public binary (or your saved setup password), open `http://192.168.4.1` and select a 2.4 GHz network. Once the ESP has an address, open `/control`. Username: `admin`. Public v1.1.0 first asks you to set personal passwords at `/settings`; existing provisioned devices keep their saved credentials. Private builds migrate `ota_password` as the initial web/OTA password. Afterwards web and OTA passwords can be changed independently.
+Hardware connections: [v1.2.0 bridge](docs/UART_BRIDGE.md) and [electrical schematic](#electrical-schematic). After flashing, join `haier-s3-<suffix>-setup` using `Haier-Setup` for a fresh public binary (or your saved setup password), open `http://192.168.4.1` and select a 2.4 GHz network. Once the ESP has an address, open `/control`. Username: `admin`. The public binary first asks you to set personal passwords at `/settings`; existing provisioned devices keep their saved credentials. Private builds migrate `ota_password` as the initial web/OTA password. Afterwards web and OTA passwords can be changed independently.
 
 The `/wifi/reset` page forgets saved networks and returns to setup mode while retaining MQTT/Modbus settings and control passwords.
 
