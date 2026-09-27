@@ -130,7 +130,14 @@ class HonClimate : public HaierClimateBase {
   void set_status_message_header_size(size_t size) { this->status_message_header_size_ = size; };
   void set_control_method(HonControlMethod method) {
     this->control_method_ = method;
-    if (method == HonControlMethod::MONITOR_ONLY) clear_bridge_overrides();
+    if (method == HonControlMethod::MONITOR_ONLY) {
+      clear_bridge_overrides();
+      if (this->inline_bridge_) {
+        this->clear_control_messages_queue_();
+        this->next_hvac_settings_.reset();
+        this->reset_to_idle_();
+      }
+    }
   };
   template<typename F> void add_alarm_start_callback(F &&callback) {
     this->alarm_start_callback_.add(std::forward<F>(callback));
@@ -141,6 +148,8 @@ class HonClimate : public HaierClimateBase {
   float get_active_alarm_count() const { return this->active_alarm_count_; }
 
  protected:
+  void observe(const haier_inline::Frame &frame) override;
+  bool cache_status_(const uint8_t *data, size_t size);
   void set_handlers() override;
   void process_phase(std::chrono::steady_clock::time_point now) override;
   haier_protocol::HaierMessage get_control_message() override;

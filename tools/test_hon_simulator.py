@@ -21,3 +21,12 @@ subprocess.run(command + [
     str(library / 'src/transport/haier_frame.cpp'), '-o', str(binary),
 ], check=True, cwd=root)
 subprocess.run([str(binary)], check=True, cwd=root)
+
+bridge_binary = out / ('test_inline_protocol.exe' if os.name == 'nt' else 'test_inline_protocol')
+subprocess.run(command + [
+    '-std=c++17', '-Wall', '-Wextra', '-include', 'cstddef', '-DHAIER_LOG_LEVEL=0',
+    '-I', str(root), '-I', str(library / 'include'),
+    str(root / 'tests/test_inline_protocol.cpp'),
+    *[str(p) for p in (library / 'src').rglob('*.cpp')], '-o', str(bridge_binary),
+], check=True, cwd=root)
+subprocess.run([str(bridge_binary)], check=True, cwd=root)

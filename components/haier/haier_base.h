@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include "inline_bridge.h"
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/automation.h"
@@ -30,7 +31,8 @@ struct HaierBaseSettings {
 class HaierClimateBase : public esphome::Component,
                          public esphome::climate::Climate,
                          public esphome::uart::UARTDevice,
-                         public haier_protocol::ProtocolStream {
+                         public haier_protocol::ProtocolStream,
+                         protected haier_inline::Sink {
 #ifdef USE_SWITCH
  public:
   void set_display_switch(switch_::Switch *sw);
@@ -62,13 +64,11 @@ class HaierClimateBase : public esphome::Component,
   void set_supported_swing_modes(esphome::climate::ClimateSwingModeMask modes);
   void set_supported_presets(esphome::climate::ClimatePresetMask presets);
   bool valid_connection() const { return this->protocol_phase_ >= ProtocolPhases::IDLE; };
-  size_t available() noexcept override { return esphome::uart::UARTDevice::available(); };
-  size_t read_array(uint8_t *data, size_t len) noexcept override {
-    return esphome::uart::UARTDevice::read_array(data, len) ? len : 0;
-  };
-  void write_array(const uint8_t *data, size_t len) noexcept override {
-    esphome::uart::UARTDevice::write_array(data, len);
-  };
+  void set_factory_uart(uart::UARTComponent *value) { factory_uart_ = value; }
+  const haier_inline::Bridge *inline_bridge() const { return inline_bridge_.get(); }
+  size_t available() noexcept override;
+  size_t read_array(uint8_t *data, size_t len) noexcept override;
+  void write_array(const uint8_t *data, size_t len) noexcept override;
   bool can_send_message() const { return haier_protocol_.get_outgoing_queue_size() == 0; };
   void set_answer_timeout(uint32_t timeout);
   void set_send_wifi(bool send_wifi);
@@ -78,6 +78,15 @@ class HaierClimateBase : public esphome::Component,
   }
 
  protected:
+  uart::UARTComponent *factory_uart_{nullptr};
+  std::unique_ptr<haier_inline::Bridge> inline_bridge_;
+  uint8_t local_rx_[2048]{};
+  size_t local_head_{0}, local_size_{0};
+  void pump_bridge_();
+  void to_main(const uint8_t *data, size_t len) override { UARTDevice::write_array(data, len); }
+  void to_factory(const uint8_t *data, size_t len) override { factory_uart_->write_array(data, len); }
+  void to_local(const uint8_t *data, size_t len) override;
+  void observe(const haier_inline::Frame &frame) override {}
   enum class ProtocolPhases {
     UNKNOWN = -1,
     // INITIALIZATION

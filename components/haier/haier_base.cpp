@@ -237,6 +237,14 @@ haier_protocol::HandlerError HaierClimateBase::timeout_default_handler_(haier_pr
 }
 
 void HaierClimateBase::setup() {
+  if (this->factory_uart_) {
+    this->inline_bridge_.reset(new haier_inline::Bridge(*this));
+    this->inline_bridge_->start(millis());
+    this->haier_protocol_.set_answer_timeout(1000);
+    // The bridge supplies the idle guard. Do not leave a serialized control
+    // queued behind the library's separate cooldown while factory state changes.
+    this->haier_protocol_.set_cooldown_interval(0);
+  }
   // Set timestamp here to give AC time to boot
   this->last_request_timestamp_ = std::chrono::steady_clock::now();
   this->set_phase(ProtocolPhases::SENDING_INIT_1);
@@ -252,6 +260,19 @@ void HaierClimateBase::dump_config() {
 }
 
 void HaierClimateBase::loop() {
+  if (this->inline_bridge_) {
+    this->pump_bridge_();
+    if (this->inline_bridge_->busy()) {
+      this->haier_protocol_.loop();
+      if (!this->haier_protocol_.is_waiting_for_answer())
+        this->inline_bridge_->local_finished(millis());
+      return;
+    }
+    if (!this->inline_bridge_->ready(millis())) return;
+    // The factory module owns initialization once detected. Observe its status
+    // instead of advertising a second module to the appliance.
+    if (this->inline_bridge_->factory_present() && !this->valid_connection()) return;
+  }
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   if ((std::chrono::duration_cast<std::chrono::milliseconds>(now - this->last_valid_status_timestamp_).count() >
        COMMUNICATION_TIMEOUT_MS) ||
@@ -413,8 +434,53 @@ void HaierClimateBase::HvacSettings::reset() {
 
 void HaierClimateBase::send_message_(const haier_protocol::HaierMessage &command, bool use_crc, uint8_t num_repeats,
                                      std::chrono::milliseconds interval) {
+  if (this->inline_bridge_ && this->inline_bridge_->factory_present()) num_repeats = 0;
   this->haier_protocol_.send_message(command, use_crc, num_repeats, interval);
   this->last_request_timestamp_ = std::chrono::steady_clock::now();
+}
+
+size_t HaierClimateBase::available() noexcept {
+  return this->inline_bridge_ ? this->local_size_ : UARTDevice::available();
+}
+
+size_t HaierClimateBase::read_array(uint8_t *data, size_t len) noexcept {
+  if (!this->inline_bridge_) return UARTDevice::read_array(data, len) ? len : 0;
+  if (len > this->local_size_) return 0;
+  for (size_t i = 0; i < len; ++i) {
+    data[i] = this->local_rx_[this->local_head_];
+    this->local_head_ = (this->local_head_ + 1) % sizeof(this->local_rx_);
+  }
+  this->local_size_ -= len;
+  return len;
+}
+
+void HaierClimateBase::write_array(const uint8_t *data, size_t len) noexcept {
+  if (!this->inline_bridge_) { UARTDevice::write_array(data, len); return; }
+  if (!this->inline_bridge_->send(data, len, millis()))
+    ESP_LOGW(TAG, "Inline bridge deferred/rejected local transmission");
+}
+
+void HaierClimateBase::to_local(const uint8_t *data, size_t len) {
+  if (len > sizeof(this->local_rx_) - this->local_size_) {
+    ESP_LOGE(TAG, "Inline local RX overflow");
+    return;
+  }
+  for (size_t i = 0; i < len; ++i)
+    this->local_rx_[(this->local_head_ + this->local_size_++) % sizeof(this->local_rx_)] = data[i];
+}
+
+void HaierClimateBase::pump_bridge_() {
+  uint8_t b;
+  // Factory input first: a waiting factory request wins over a new local poll.
+  for (unsigned i = 0; i < 1024 && this->factory_uart_->available(); ++i) {
+    if (!this->factory_uart_->read_byte(&b)) break;
+    this->inline_bridge_->feed(true, b, millis());
+  }
+  for (unsigned i = 0; i < 1024 && UARTDevice::available(); ++i) {
+    if (!UARTDevice::read_byte(&b)) break;
+    this->inline_bridge_->feed(false, b, millis());
+  }
+  this->inline_bridge_->tick(millis());
 }
 
 }  // namespace esphome::haier

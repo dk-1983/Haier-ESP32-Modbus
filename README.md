@@ -1,22 +1,41 @@
 [English](README.md) | [Русский](README_RU.md)
 
-![Haier ESP32 Modbus — local air conditioner bridge](docs/assets/haier_banner.png)
+![Haier ESP32 Modbus — local air conditioner bridge](docs/assets/haier_banner-v1.2.0.png)
 
 <a id="haier-в-home-assistant--mqtt-и-modbus--esp32-s3"></a>
 
 # Haier in Home Assistant · MQTT and Modbus · ESP32-S3
 
-**Our ESP32-S3 controller replaces the original Haier Wi-Fi module and connects to its UART connector on the indoor unit's main board.** It exchanges commands and status with the air conditioner through this connector. Follow the [project schematic](#electrical-schematic) for power and UART level conversion; verify the connector pinout for your model.
+**Keep the factory controls. Add local automation.** Haier-ESP32-Modbus connects your air conditioner to Home Assistant and building automation through **Modbus Devices, MQTT and Modbus RTU/TCP**, with a local web panel for setup and direct control.
 
-**Bring your Haier air conditioner into your smart home: Home Assistant controls, schedules and automations using your own sensors — locally, without a Haier cloud account.** The firmware bridges the air conditioner's UART to MQTT over Wi-Fi and automatically announces climate controls, quiet mode, display and louvre positions to Home Assistant.
+The new **transparent UART bridge in development v1.2.0** places our ESP32-S3 between the indoor unit's main board and its original Wi-Fi module. The factory module stays in the system: the bridge forwards its UART exchanges and coordinates our own requests alongside them. This lets you add local control while retaining the equipment's original control path.
 
-For MQTT, you need an ESP32-S3, power supply and UART level conversion, Wi-Fi and an MQTT broker. MAX485 and Moxa are used for the RS-485 option. The web panel provides setup and direct browser control. Modbus installations can use TCP/RTU, the ready-made **Modbus Devices** profile and **4VRS Gateway on Moxa**.
+**Release status:** v1.2.0 has passed the 30-minute bridge run and physical factory-module removal/return checks on our installation; public release preparation is still pending. The downloadable **v1.1.0** works as a replacement for the original Wi-Fi module; it does **not** include the new inline bridge. Choose the wiring for the firmware you install.
 
-**[Install the firmware, step by step](docs/FLASHING.md)** · **[Connect using MQTT](#home-assistant-via-mqtt)** · **[Connect using Modbus Devices](#ready-made-home-assistant-integration)** · **[Build the firmware](#build)** · **[Electrical schematic](#electrical-schematic)**
+## Factory functionality, with more ways to control it
+
+For owners who want to retain their air conditioner's original equipment, the bridge is the key addition. It preserves the connection to the factory Wi-Fi module rather than requiring its removal from the system. On our Haier AS25HSL1HRA-W, factory-module pairing in **EVO** and setpoint changes through the factory app have been confirmed with the bridge connected. Our controller also receives the appliance state for local interfaces.
+
+The factory app continues to use its own service; local MQTT, Modbus and web control do not require a Haier cloud account. The bridge operates on the Wi-Fi UART connection, without replacing the indoor unit's main controller, display or IR receiver. Compatibility with every model, factory command or update is not implied: see the [bridge design and acceptance record](docs/UART_BRIDGE.md).
+
+| Connection | What you get | What you need |
+|---|---|---|
+| **Modbus Devices → Home Assistant** | Ready-made **4VRS Haier-ESP32** profile, climate controls, extended functions and diagnostics | Modbus Devices and a direct Modbus TCP connection over Wi-Fi; no MQTT broker or MAX485 required for this path |
+| **MQTT → Home Assistant** | Automatic entity discovery, local control and automations | An MQTT broker and Home Assistant's MQTT integration |
+| **RS-485 / Modbus RTU** | Connection to industrial controllers, BMS/SCADA or a network gateway | An RS-485 transceiver; Moxa / 4VRS Gateway is an optional network connection |
+| **Local web panel** | Setup, direct control, passwords and firmware updates | A browser on the local network |
+
+**A complete route from the DIY controller to Home Assistant:** use our [Modbus Devices integration](https://github.com/dk-1983/Modbus_Devices#4vrs) and select **4VRS → Haier-ESP32**. You do not have to describe registers manually. For installations with RS-485, our [Moxa / 4VRS Gateway](https://github.com/dk-1983/moxa-4vrs-gateway) completes the network path. [Connection guide →](docs/SYSTEM.md)
+
+For a Wi-Fi-only build, leave out the MAX485/RS-485 section. Both arrangements need ESP32-S3 power and UART level conversion according to the appropriate schematic. The bridge arrangement also needs the factory-module UART connection.
+
+**[Modbus Devices setup](#ready-made-home-assistant-integration)** · **[How the UART bridge works](docs/UART_BRIDGE.md)** · **[MQTT setup](#home-assistant-via-mqtt)** · **[Flash the firmware](docs/FLASHING.md)** · **[Bridge schematic](docs/assets/haier-uart-bridge-schematic.svg)** · **[v1.1.0 schematic](#electrical-schematic)**
 
 Tested hardware: **ESP32-S3-WROOM-1 N16R8 + Haier AS25HSL1HRA-W**. Other models require UART and protocol compatibility checks.
 
 **Project foundation:** Haier protocol integration is based on [paveldn/haier-esphome](https://github.com/paveldn/haier-esphome) by Pavlo Dudnytskyi. This firmware uses the Haier component from ESPHome 2026.6.5 with local changes and HaierProtocol 0.9.31. Our web management, MQTT bridge and Modbus interfaces build on that foundation. See [provenance and licenses](THIRD_PARTY_NOTICES.md).
+
+**Development source (`1.2.0`, not a published release):** an automatic [factory Wi-Fi UART bridge](docs/UART_BRIDGE.md) is being added. GPIO17/18 remain unchanged; Modbus moves to RX8/TX9 (DE21 unchanged). The stable v1.1.0 release and ordered rev1.0 PCB use the original wiring. The 30-minute coexistence test and automatic fallback/return passed. Physical RS-485 on the new pins remains deferred; [acceptance details](docs/UART_BRIDGE.md#current-hardware-results--2026-09-27).
 
 ## New in v1.1.0
 
@@ -27,6 +46,23 @@ Tested hardware: **ESP32-S3-WROOM-1 N16R8 + Haier AS25HSL1HRA-W**. Other models 
 - **Verified update files:** firmware checks the release signature, target board and file hash before selecting the new image. See [passwords, updates and recovery limits](docs/MANAGEMENT.md).
 
 The public v1.1.0 binary was installed on the operating Haier controller through GitHub OTA; access and cooling settings were preserved. [Acceptance checks](docs/VALIDATION-1.1.0.md).
+
+<a id="готовая-интеграция-с-home-assistant"></a>
+
+## Ready-made Home Assistant integration
+
+**A ready-made solution is available for anyone building this project: [Modbus Devices](https://github.com/dk-1983/Modbus_Devices#4vrs), version 1.3.0 or later, with a dedicated 4VRS Haier-ESP32 profile.** No manual register definitions in Home Assistant are required.
+
+The profile provides power, mode, temperature, fan, swing and preset controls; separate quiet/display switches; fixed louvre positions; and link/command diagnostics. State updates follow controller confirmation and readback.
+
+1. Install or update **Modbus Devices** through HACS and restart Home Assistant. [Installation guide](https://github.com/dk-1983/Modbus_Devices#installation).
+2. Open `/modbus` on the ESP and enable **TCP** for direct Wi-Fi access or **RTU** for RS-485.
+3. Add the **Modbus Devices** integration and a new hub. Select manufacturer **4VRS**, model **Haier-ESP32**.
+4. For direct access, select **Modbus TCP/IP**, the controller IP, port **502** and its Unit ID. For **Moxa / 4VRS Gateway**, use the gateway address/port and match its transport mode — [connection options](docs/SYSTEM.md#2-choose-the-connection-path).
+
+Modbus Devices also includes a dashboard device-card generator. The original Haier YCJ-A002 profile remains separate; select **4VRS Haier-ESP32** for this project's extended features.
+
+According to Modbus Devices documentation, full hardware validation of the extended profile is planned with the production PCB. Completed firmware and bench checks are listed separately in [VALIDATION.md](docs/VALIDATION.md).
 
 <a id="home-assistant-через-mqtt"></a>
 
@@ -118,23 +154,6 @@ The firmware publishes actual Haier state and command results. In the current Di
 
 **[MQTT setup, commands, diagnostics and connection recovery →](docs/MQTT.md)**
 
-<a id="готовая-интеграция-с-home-assistant"></a>
-
-## Ready-made Home Assistant integration
-
-**A ready-made solution is available for anyone building this project: [Modbus Devices](https://github.com/dk-1983/Modbus_Devices#4vrs), version 1.3.0 or later, with a dedicated 4VRS Haier-ESP32 profile.** No manual register definitions in Home Assistant are required.
-
-The profile provides power, mode, temperature, fan, swing and preset controls; separate quiet/display switches; fixed louvre positions; and link/command diagnostics. State updates follow controller confirmation and readback.
-
-1. Install or update **Modbus Devices** through HACS and restart Home Assistant. [Installation guide](https://github.com/dk-1983/Modbus_Devices#installation).
-2. Open `/modbus` on the ESP and enable **TCP** for direct Wi-Fi access or **RTU** for RS-485.
-3. Add the **Modbus Devices** integration and a new hub. Select manufacturer **4VRS**, model **Haier-ESP32**.
-4. For direct access, select **Modbus TCP/IP**, the controller IP, port **502** and its Unit ID. For **Moxa / 4VRS Gateway**, use the gateway address/port and match its transport mode — [connection options](docs/SYSTEM.md#2-choose-the-connection-path).
-
-Modbus Devices also includes a dashboard device-card generator. The original Haier YCJ-A002 profile remains separate; select **4VRS Haier-ESP32** for this project's extended features.
-
-According to Modbus Devices documentation, full hardware validation of the extended profile is planned with the production PCB. Completed firmware and bench checks are listed separately in [VALIDATION.md](docs/VALIDATION.md).
-
 <a id="полная-система-4vrs"></a>
 
 ## The complete 4VRS system
@@ -142,6 +161,7 @@ According to Modbus Devices documentation, full hardware validation of the exten
 ```mermaid
 flowchart LR
   AC["Haier air conditioner"] <-->|"hOn UART"| ESP["Haier-ESP32-Modbus"]
+  ESP <-->|"UART bridge"| FACTORY["Factory Wi-Fi / EVO (v1.2.0 development)"]
   ESP <-->|"RS-485 / Modbus RTU"| MOXA["Moxa / 4VRS Gateway"]
   MOXA <-->|"Modbus TCP"| HA["Home Assistant / Modbus Devices"]
   ESP <-->|"Modbus TCP over Wi-Fi"| HA

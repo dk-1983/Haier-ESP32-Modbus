@@ -26,7 +26,7 @@ inline unsigned downloadPercent() {
   const uint32_t total=downloadSize.load(),done=downloadBytes.load();
   return total?unsigned(std::min<uint64_t>(100,uint64_t(done)*100/total)):0;
 }
-static constexpr char PROFILE[]="haier-s3-n16r8-v1";
+static constexpr char PROFILE[]="haier-s3-n16r8-v2";
 #ifdef HAIER_TEST_FEED
 static constexpr char FEED[]="https://raw.githubusercontent.com/dk-1983/Haier-ESP32-Modbus/main/releases/testing.json";
 #else

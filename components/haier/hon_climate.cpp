@@ -172,6 +172,33 @@ haier_protocol::HandlerError HonClimate::get_device_id_answer_handler_(haier_pro
   }
 }
 
+bool HonClimate::cache_status_(const uint8_t *data, size_t size) {
+  this->real_control_packet_size_ = sizeof(hon_protocol::HaierPacketControl) + this->extra_control_packet_bytes_;
+  this->real_sensors_packet_size_ = sizeof(hon_protocol::HaierPacketSensors) + this->extra_sensors_packet_bytes_;
+  if (size < 2 + this->status_message_header_size_ + this->real_control_packet_size_) return false;
+  if (!this->last_status_message_)
+    this->last_status_message_.reset(new uint8_t[this->real_control_packet_size_]);
+  memcpy(this->last_status_message_.get(), data + 2 + this->status_message_header_size_, this->real_control_packet_size_);
+  this->status_message_callback_.call(reinterpret_cast<const char *>(data), size);
+  return true;
+}
+
+void HonClimate::observe(const haier_inline::Frame &frame) {
+  const auto *data = frame.payload();
+  const size_t size = frame.payload_size();
+  if (frame.type() == 0x02 && size >= 2 && (data[0] == 0x6D || data[0] == 0x7D) && data[1] == 1) {
+    // Passive status updates must not acknowledge/pop our own command queue.
+    if (this->process_status_message_(data, size) == haier_protocol::HandlerError::HANDLER_OK) {
+      this->use_crc_ = frame.crc();
+      if (!this->valid_connection()) this->set_phase(ProtocolPhases::IDLE);
+      this->cache_status_(data, size);
+    }
+  } else if ((frame.type() == 0x04 || frame.type() == 0x74) && size >= sizeof(this->active_alarms_) + 2) {
+    this->process_alarm_message_(data, size, true);
+    // Only the factory Wi-Fi module sends the notification ACK.
+  }
+}
+
 haier_protocol::HandlerError HonClimate::status_handler_(haier_protocol::FrameType request_type,
                                                          haier_protocol::FrameType message_type, const uint8_t *data,
                                                          size_t data_size) {
@@ -186,19 +213,7 @@ haier_protocol::HandlerError HonClimate::status_handler_(haier_protocol::FrameTy
       this->action_request_.reset();
       this->force_send_control_ = false;
     } else {
-      if (!this->last_status_message_) {
-        this->real_control_packet_size_ = sizeof(hon_protocol::HaierPacketControl) + this->extra_control_packet_bytes_;
-        this->real_sensors_packet_size_ = sizeof(hon_protocol::HaierPacketSensors) + this->extra_sensors_packet_bytes_;
-        this->last_status_message_.reset();
-        this->last_status_message_ = std::unique_ptr<uint8_t[]>(new uint8_t[this->real_control_packet_size_]);
-      };
-      if (data_size >= this->real_control_packet_size_ + 2) {
-        memcpy(this->last_status_message_.get(), data + 2 + this->status_message_header_size_,
-               this->real_control_packet_size_);
-        this->status_message_callback_.call((const char *) data, data_size);
-      } else {
-        ESP_LOGW(TAG, "Status packet too small: %zu (should be >= %zu)", data_size, this->real_control_packet_size_);
-      }
+      this->cache_status_(data, data_size);
       switch (this->protocol_phase_) {
         case ProtocolPhases::SENDING_FIRST_STATUS_REQUEST:
           ESP_LOGI(TAG, "First HVAC status received");

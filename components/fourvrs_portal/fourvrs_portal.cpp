@@ -102,6 +102,36 @@ String Portal::climate_status_(bool raw) {
   out += ",\"vertical_position\":" + (extras ? json_string_(position_name_(raw_control_.vertical_swing_mode,true)) : String("null"));
   out += ",\"horizontal_position\":" + (extras ? json_string_(position_name_(raw_control_.horizontal_swing_mode,false)) : String("null"));
   if(raw) out += ",\"last_status_hex\":" + json_string_(last_payload_);
+  if (const auto *bridge = climate_->inline_bridge(); raw && bridge) {
+    const auto &c = bridge->counters;
+    out += ",\"uart_bridge\":{\"factory_detected\":" + String(bridge->factory_present() ? "true" : "false");
+    out += ",\"local_busy\":" + String(bridge->busy() ? "true" : "false");
+    out += ",\"passthrough_only\":" + String(bridge->passthrough_only() ? "true" : "false");
+    out += ",\"main_frames\":" + String(c.main_frames) + ",\"factory_frames\":" + String(c.factory_frames);
+    out += ",\"local_requests\":" + String(c.local_requests) + ",\"local_replies\":" + String(c.local_replies);
+    out += ",\"invalid\":" + String(c.invalid) + ",\"partial_timeouts\":" + String(c.partial_timeouts);
+    out += ",\"transaction_timeouts\":" + String(c.transaction_timeouts) + ",\"overflows\":" + String(c.overflows);
+    out += ",\"rejected\":" + String(c.rejected);
+    out += ",\"factory_fallbacks\":" + String(c.factory_fallbacks);
+    out += ",\"recovered_preambles\":" + String(c.recovered_preambles);
+    out += ",\"invalid_main\":" + String(bridge->invalid_side[0]) + ",\"invalid_factory\":" + String(bridge->invalid_side[1]);
+    out += ",\"local_timeouts\":" + String(bridge->local_timeouts);
+    out += ",\"pending_timeouts\":[" + String(bridge->pending_timeouts[0]) + "," + String(bridge->pending_timeouts[1]) + "]";
+    out += ",\"timeout_types\":[" + String(bridge->timeout_type[0]) + "," + String(bridge->timeout_type[1]) + "]";
+    out += ",\"invalid_source\":" + String(bridge->invalid_source) + ",\"invalid_wire\":\"";
+    for (size_t i = 0; i < bridge->invalid_size; ++i) { char hex[3]; snprintf(hex,sizeof(hex),"%02X",bridge->invalid_wire[i]); out += hex; }
+    out += "\"";
+    out += ",\"error_context\":\"";
+    for (size_t i = 0; i < bridge->error_context_size; ++i) { char hex[3]; snprintf(hex,sizeof(hex),"%02X",bridge->error_context[i]); out += hex; }
+    out += "\"";
+    out += ",\"last_main_type\":" + String(bridge->last_main_type) + ",\"last_main_flags\":" + String(bridge->last_main_flags);
+    out += ",\"last_local_type\":" + String(bridge->last_local_type) + ",\"last_local_flags\":" + String(bridge->last_local_flags);
+    out += ",\"last_main_address\":[";
+    for (unsigned i = 0; i < 5; ++i) { if (i) out += ','; out += String(bridge->last_main_address[i]); }
+    out += "],\"version_flags\":" + String(bridge->version_flags) + ",\"version_address\":[";
+    for (unsigned i = 0; i < 5; ++i) { if (i) out += ','; out += String(bridge->version_address[i]); }
+    out += "]}";
+  }
   return out + "}";
 }
 String Portal::health_() {

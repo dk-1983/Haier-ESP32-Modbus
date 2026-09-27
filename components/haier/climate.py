@@ -213,6 +213,7 @@ CONFIG_SCHEMA = cv.All(
             ),
             PROTOCOL_HON: _base_config_schema(HonClimate).extend(
                 {
+                    cv.Optional("factory_uart_id"): cv.use_id(uart.UARTComponent),
                     cv.Optional(
                         CONF_CONTROL_METHOD, default="SET_GROUP_PARAMETERS"
                     ): cv.enum(SUPPORTED_HON_CONTROL_METHODS, upper=True),
@@ -426,6 +427,17 @@ async def power_action_to_code(config, action_id, template_arg, args):
 
 def _final_validate(config):
     full_config = fv.full_config.get()
+    if "factory_uart_id" in config:
+        if config["factory_uart_id"] == config["uart_id"]:
+            raise cv.Invalid("Factory and motherboard UARTs must be different")
+        if full_config.get(CONF_LOGGER, {}).get("baud_rate", 0) != 0:
+            raise cv.Invalid("Inline bridge uses all three UARTs; set logger baud_rate: 0")
+        selected = [u for u in full_config.get("uart", []) if u["id"] in (config["uart_id"], config["factory_uart_id"])]
+        for u in selected:
+            if u["baud_rate"] != 9600 or u["data_bits"] != 8 or u["parity"] != "NONE" or u["stop_bits"] != 1:
+                raise cv.Invalid("Haier inline bridge requires 9600 8N1 on both UARTs")
+        if config.get(CONF_WIFI_SIGNAL):
+            raise cv.Invalid("Factory Wi-Fi owns network status; use wifi_signal: false")
     if CONF_LOGGER in full_config:
         _level = "NONE"
         logger_config = full_config[CONF_LOGGER]
@@ -479,6 +491,8 @@ async def to_code(config):
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
 
+    if "factory_uart_id" in config:
+        cg.add(var.set_factory_uart(await cg.get_variable(config["factory_uart_id"])))
     cg.add(var.set_send_wifi(config[CONF_WIFI_SIGNAL]))
     if CONF_CONTROL_METHOD in config:
         cg.add(var.set_control_method(config[CONF_CONTROL_METHOD]))

@@ -3,8 +3,8 @@ substitutions:
   test_update_feed: "false"
   haier_tx: GPIO17
   haier_rx: GPIO18
-  rs485_tx: GPIO15
-  rs485_rx: GPIO16
+  rs485_tx: GPIO9
+  rs485_rx: GPIO8
   rs485_de: GPIO21
 esphome:
   name: haier-s3
@@ -34,7 +34,7 @@ fourvrs_portal:
 logger:
   level: DEBUG
   hardware_uart: UART0
-  baud_rate: 115200
+  baud_rate: 0  # All three hardware UARTs are used; web diagnostics remain available.
 uart:
   - id: haier_uart
     tx_pin: ${haier_tx}
@@ -44,6 +44,9 @@ uart:
     parity: NONE
     stop_bits: 1
     rx_buffer_size: 512
+    # Expose the first received byte immediately to the inline arbiter.
+    rx_full_threshold: 1
+    rx_timeout: 2
   - id: rs485_uart
     tx_pin: ${rs485_tx}
     rx_pin: ${rs485_rx}
@@ -55,11 +58,26 @@ uart:
     rx_buffer_size: 512
     rx_full_threshold: 1
     rx_timeout: 2
+  - id: factory_uart
+    tx_pin: GPIO16
+    rx_pin:
+      number: GPIO15
+      mode:
+        input: true
+        pullup: true
+    baud_rate: 9600
+    data_bits: 8
+    parity: NONE
+    stop_bits: 1
+    rx_buffer_size: 2048
+    rx_full_threshold: 1
+    rx_timeout: 2
 climate:
   - platform: haier
     id: haier_ac
     name: Haier
     uart_id: haier_uart
+    factory_uart_id: factory_uart
     protocol: hon
     wifi_signal: false
     control_method: MONITOR_ONLY

@@ -1,0 +1,283 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297"><rect width="420" height="297" fill="white" />
+<rect x="7" y="7" width="406" height="283" fill="none" stroke="#17212b" stroke-width="0.3" />
+<text x="15" y="20" font-family="Arial, sans-serif" font-size="6" font-weight="700" text-anchor="start" fill="#17212b">4VRS</text>
+<text x="46" y="20" font-family="Arial, sans-serif" font-size="5" font-weight="700" text-anchor="start" fill="#17212b">Haier-ESP32-Modbus</text>
+<text x="405" y="18" font-family="Arial, sans-serif" font-size="3" font-weight="700" text-anchor="end" fill="#a25a00">UART-МОСТ / ПРОЕКТ СХЕМЫ</text>
+<text x="405" y="25" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="end" fill="#17212b">27.09.2026</text>
+<line x1="15" y1="29" x2="405" y2="29" stroke="#17212b" stroke-width="0.32" />
+<text x="15" y="37" font-family="Arial, sans-serif" font-size="3.8" font-weight="700" text-anchor="start" fill="#17212b">Схема электрическая принципиальная</text>
+<rect x="15" y="270" width="390" height="15" fill="none" stroke="#17212b" stroke-width="0.3" />
+<line x1="285" y1="270" x2="285" y2="285" stroke="#17212b" stroke-width="0.32" />
+<line x1="360" y1="270" x2="360" y2="285" stroke="#17212b" stroke-width="0.32" />
+<text x="19" y="276" font-family="Arial, sans-serif" font-size="3.2" font-weight="700" text-anchor="start" fill="#17212b">Haier UART bridge + Modbus RS485</text>
+<text x="19" y="282" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">Схема UART-моста Haier · не разводка заказанной PCB rev1.0</text>
+<text x="289" y="276" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">4VRS-HAIER-BRIDGE / Э3</text>
+<text x="289" y="282" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">A3 • Масштаб: условно</text>
+<text x="364" y="276" font-family="Arial, sans-serif" font-size="3" font-weight="700" text-anchor="start" fill="#17212b">Лист 1 / 1</text>
+<text x="364" y="282" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">Проект 01</text>
+<text x="16" y="46" font-family="Arial, sans-serif" font-size="3.2" font-weight="700" text-anchor="start" fill="#17212b">ПИТАНИЕ И EN</text>
+<rect x="46" y="58" width="36" height="26" fill="none" stroke="#17212b" stroke-width="0.3" />
+<text x="64" y="64" font-family="Arial, sans-serif" font-size="3" font-weight="700" text-anchor="middle" fill="#17212b">U2</text>
+<text x="64" y="70" font-family="Arial, sans-serif" font-size="3" font-weight="400" text-anchor="middle" fill="#17212b">LM1117-3.3</text>
+<line x1="20" y1="75" x2="46" y2="75" stroke="#17212b" stroke-width="0.32" />
+<text x="43" y="73" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="end" fill="#17212b">3 IN</text>
+<line x1="20" y1="75" x2="20" y2="58" stroke="#17212b" stroke-width="0.32" />
+<text x="16" y="55" font-family="Arial, sans-serif" font-size="2.8" font-weight="700" text-anchor="start" fill="#17212b">+5V (HAIER)</text>
+<line x1="82" y1="75" x2="150" y2="75" stroke="#17212b" stroke-width="0.32" />
+<text x="84" y="73" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">2 OUT / TAB</text>
+<text x="106" y="73.2" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">+3V3</text>
+<line x1="64" y1="84" x2="64" y2="102" stroke="#17212b" stroke-width="0.32" />
+<text x="67" y="90" font-family="Arial, sans-serif" font-size="2.4" font-weight="400" text-anchor="start" fill="#17212b">1 GND</text>
+<line x1="64" y1="102" x2="64" y2="104" stroke="#17212b" stroke-width="0.32" />
+<line x1="61" y1="104" x2="67" y2="104" stroke="#17212b" stroke-width="0.32" />
+<line x1="62" y1="105.3" x2="66" y2="105.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="63" y1="106.6" x2="65" y2="106.6" stroke="#17212b" stroke-width="0.32" />
+<circle cx="29" cy="75" r=".65" fill="#17212b" />
+<line x1="29" y1="75" x2="29" y2="80" stroke="#17212b" stroke-width="0.32" />
+<line x1="26" y1="80" x2="32" y2="80" stroke="#17212b" stroke-width="0.32" />
+<line x1="26" y1="82" x2="32" y2="82" stroke="#17212b" stroke-width="0.32" />
+<line x1="29" y1="82" x2="29" y2="88" stroke="#17212b" stroke-width="0.32" />
+<text x="33" y="79" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">C1</text>
+<text x="33" y="84" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">0,1 мкФ</text>
+<line x1="29" y1="88" x2="29" y2="102" stroke="#17212b" stroke-width="0.32" />
+<line x1="29" y1="102" x2="29" y2="104" stroke="#17212b" stroke-width="0.32" />
+<line x1="26" y1="104" x2="32" y2="104" stroke="#17212b" stroke-width="0.32" />
+<line x1="27" y1="105.3" x2="31" y2="105.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="28" y1="106.6" x2="30" y2="106.6" stroke="#17212b" stroke-width="0.32" />
+<circle cx="103" cy="75" r=".65" fill="#17212b" />
+<line x1="103" y1="75" x2="103" y2="80" stroke="#17212b" stroke-width="0.32" />
+<line x1="100" y1="80" x2="106" y2="80" stroke="#17212b" stroke-width="0.32" />
+<line x1="100" y1="82" x2="106" y2="82" stroke="#17212b" stroke-width="0.32" />
+<line x1="103" y1="82" x2="103" y2="88" stroke="#17212b" stroke-width="0.32" />
+<text x="107" y="79" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">C2</text>
+<text x="107" y="84" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">100 мкФ / 10 В</text>
+<text x="98" y="78" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="start" fill="#17212b">+</text>
+<line x1="103" y1="88" x2="103" y2="102" stroke="#17212b" stroke-width="0.32" />
+<line x1="103" y1="102" x2="103" y2="104" stroke="#17212b" stroke-width="0.32" />
+<line x1="100" y1="104" x2="106" y2="104" stroke="#17212b" stroke-width="0.32" />
+<line x1="101" y1="105.3" x2="105" y2="105.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="102" y1="106.6" x2="104" y2="106.6" stroke="#17212b" stroke-width="0.32" />
+<line x1="231" y1="52" x2="231" y2="55" stroke="#17212b" stroke-width="0.32" />
+<text x="224" y="50.2" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">+3V3</text>
+<line x1="231" y1="55" x2="231" y2="58" stroke="#17212b" stroke-width="0.32" />
+<rect x="229.5" y="58" width="3" height="7" fill="none" stroke="#17212b" stroke-width="0.3" />
+<line x1="231" y1="65" x2="231" y2="68" stroke="#17212b" stroke-width="0.32" />
+<text x="234" y="60" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">R1</text>
+<text x="234" y="64" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">10 кОм</text>
+<line x1="231" y1="68" x2="231" y2="74" stroke="#17212b" stroke-width="0.32" />
+<circle cx="140" cy="75" r=".65" fill="#17212b" />
+<line x1="140" y1="75" x2="140" y2="80" stroke="#17212b" stroke-width="0.32" />
+<line x1="137" y1="80" x2="143" y2="80" stroke="#17212b" stroke-width="0.32" />
+<line x1="137" y1="82" x2="143" y2="82" stroke="#17212b" stroke-width="0.32" />
+<line x1="140" y1="82" x2="140" y2="88" stroke="#17212b" stroke-width="0.32" />
+<text x="144" y="79" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">C3</text>
+<text x="144" y="84" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">0,1 мкФ</text>
+<line x1="140" y1="88" x2="140" y2="102" stroke="#17212b" stroke-width="0.32" />
+<line x1="140" y1="102" x2="140" y2="104" stroke="#17212b" stroke-width="0.32" />
+<line x1="137" y1="104" x2="143" y2="104" stroke="#17212b" stroke-width="0.32" />
+<line x1="138" y1="105.3" x2="142" y2="105.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="139" y1="106.6" x2="141" y2="106.6" stroke="#17212b" stroke-width="0.32" />
+<text x="16" y="115" font-family="Arial, sans-serif" font-size="2.8" font-weight="700" text-anchor="start" fill="#17212b">C2 и C3: между +3V3 и GND. EN: подтяжка R1 к +3V3.</text>
+<text x="16" y="120" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">Питание Haier и штатного Wi-Fi: общие +5V и GND.</text>
+<rect x="165" y="74" width="90" height="137" fill="none" stroke="#17212b" stroke-width="0.3" />
+<text x="210" y="82" font-family="Arial, sans-serif" font-size="4" font-weight="700" text-anchor="middle" fill="#17212b">U1</text>
+<text x="210" y="89" font-family="Arial, sans-serif" font-size="3.7" font-weight="700" text-anchor="middle" fill="#17212b">ESP32-S3-WROOM-1</text>
+<text x="210" y="95" font-family="Arial, sans-serif" font-size="3.2" font-weight="400" text-anchor="middle" fill="#17212b">N16R8</text>
+<text x="210" y="103" font-family="Arial, sans-serif" font-size="2.8" font-weight="700" text-anchor="middle" fill="#17212b">GPIO ≠ номер контакта модуля</text>
+<line x1="184" y1="74" x2="184" y2="59" stroke="#17212b" stroke-width="0.32" />
+<text x="177" y="57.2" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">+3V3</text>
+<text x="187" y="70" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">2 / 3V3</text>
+<text x="234" y="70" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">3 / EN</text>
+<text x="286" y="59" font-family="Arial, sans-serif" font-size="3.1" font-weight="700" text-anchor="start" fill="#17212b">ПРОГРАММАТОР / UART 3,3 В</text>
+<text x="286" y="66" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">TX и RX указаны со стороны адаптера</text>
+<line x1="255" y1="111" x2="365" y2="111" stroke="#17212b" stroke-width="0.32" />
+<text x="258" y="109" font-family="Arial, sans-serif" font-size="2.4" font-weight="400" text-anchor="start" fill="#17212b">37</text>
+<text x="251" y="112" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="end" fill="#17212b">GPIO43 / TXD0</text>
+<text x="366" y="112" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="start" fill="#17212b">RX адаптера</text>
+<line x1="255" y1="121" x2="365" y2="121" stroke="#17212b" stroke-width="0.32" />
+<text x="258" y="119" font-family="Arial, sans-serif" font-size="2.4" font-weight="400" text-anchor="start" fill="#17212b">36</text>
+<text x="251" y="122" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="end" fill="#17212b">GPIO44 / RXD0</text>
+<text x="366" y="122" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="start" fill="#17212b">TX адаптера</text>
+<line x1="365" y1="77" x2="365" y2="86" stroke="#17212b" stroke-width="0.32" />
+<line x1="365" y1="86" x2="365" y2="88" stroke="#17212b" stroke-width="0.32" />
+<line x1="362" y1="88" x2="368" y2="88" stroke="#17212b" stroke-width="0.32" />
+<line x1="363" y1="89.3" x2="367" y2="89.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="364" y1="90.6" x2="366" y2="90.6" stroke="#17212b" stroke-width="0.32" />
+<text x="368" y="79" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="start" fill="#17212b">GND адаптера</text>
+<text x="286" y="98" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">BOOT: GPIO0 = 0 при сбросе EN</text>
+<text x="169" y="133" font-family="Arial, sans-serif" font-size="2.7" font-weight="700" text-anchor="start" fill="#17212b">MAIN UART</text>
+<text x="251" y="133" font-family="Arial, sans-serif" font-size="2.7" font-weight="700" text-anchor="end" fill="#17212b">FACTORY UART</text>
+<text x="16" y="134" font-family="Arial, sans-serif" font-size="3.1" font-weight="700" text-anchor="start" fill="#17212b">ОСНОВНАЯ ПЛАТА HAIER</text>
+<text x="16" y="140" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">Разъём штатного Wi-Fi · UART 9600 8N1</text>
+<text x="16" y="146" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">TX (HAIER)</text>
+<line x1="45" y1="150" x2="68" y2="150" stroke="#17212b" stroke-width="0.32" />
+<line x1="68" y1="150" x2="71" y2="150" stroke="#17212b" stroke-width="0.32" />
+<rect x="71" y="148.5" width="8" height="3" fill="none" stroke="#17212b" stroke-width="0.3" />
+<line x1="79" y1="150" x2="82" y2="150" stroke="#17212b" stroke-width="0.32" />
+<text x="75" y="145" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="middle" fill="#17212b">R4</text>
+<text x="75" y="156" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="middle" fill="#17212b">10 кОм</text>
+<line x1="82" y1="150" x2="115" y2="150" stroke="#17212b" stroke-width="0.32" />
+<circle cx="115" cy="150" r=".65" fill="#17212b" />
+<line x1="115" y1="150" x2="165" y2="150" stroke="#17212b" stroke-width="0.32" />
+<text x="162" y="147" font-family="Arial, sans-serif" font-size="2.4" font-weight="400" text-anchor="end" fill="#17212b">11</text>
+<text x="169" y="151" font-family="Arial, sans-serif" font-size="3" font-weight="400" text-anchor="start" fill="#17212b">GPIO18 / RX</text>
+<line x1="115" y1="150" x2="115" y2="153" stroke="#17212b" stroke-width="0.32" />
+<rect x="113.5" y="153" width="3" height="7" fill="none" stroke="#17212b" stroke-width="0.3" />
+<line x1="115" y1="160" x2="115" y2="163" stroke="#17212b" stroke-width="0.32" />
+<text x="118" y="155" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">R5</text>
+<text x="118" y="159" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">20 кОм</text>
+<line x1="115" y1="163" x2="115" y2="166" stroke="#17212b" stroke-width="0.32" />
+<line x1="115" y1="166" x2="115" y2="168" stroke="#17212b" stroke-width="0.32" />
+<line x1="112" y1="168" x2="118" y2="168" stroke="#17212b" stroke-width="0.32" />
+<line x1="113" y1="169.3" x2="117" y2="169.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="114" y1="170.6" x2="116" y2="170.6" stroke="#17212b" stroke-width="0.32" />
+<text x="16" y="176" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">RX (HAIER)</text>
+<line x1="45" y1="180" x2="165" y2="180" stroke="#17212b" stroke-width="0.32" />
+<text x="162" y="177" font-family="Arial, sans-serif" font-size="2.4" font-weight="400" text-anchor="end" fill="#17212b">10</text>
+<text x="169" y="181" font-family="Arial, sans-serif" font-size="3" font-weight="400" text-anchor="start" fill="#17212b">GPIO17 / TX</text>
+<text x="286" y="134" font-family="Arial, sans-serif" font-size="3.1" font-weight="700" text-anchor="start" fill="#17212b">ШТАТНЫЙ МОДУЛЬ Wi-Fi HAIER</text>
+<text x="286" y="140" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">TX/RX указаны со стороны штатного модуля</text>
+<line x1="255" y1="150" x2="280" y2="150" stroke="#17212b" stroke-width="0.32" />
+<circle cx="280" cy="150" r=".65" fill="#17212b" />
+<line x1="280" y1="150" x2="303" y2="150" stroke="#17212b" stroke-width="0.32" />
+<line x1="303" y1="150" x2="306" y2="150" stroke="#17212b" stroke-width="0.32" />
+<rect x="306" y="148.5" width="8" height="3" fill="none" stroke="#17212b" stroke-width="0.3" />
+<line x1="314" y1="150" x2="317" y2="150" stroke="#17212b" stroke-width="0.32" />
+<text x="310" y="145" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="middle" fill="#17212b">R3</text>
+<text x="310" y="156" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="middle" fill="#17212b">10 кОм</text>
+<line x1="317" y1="150" x2="365" y2="150" stroke="#17212b" stroke-width="0.32" />
+<text x="341" y="146" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">TX (Wi-Fi)</text>
+<text x="258" y="147" font-family="Arial, sans-serif" font-size="2.4" font-weight="400" text-anchor="start" fill="#17212b">8</text>
+<text x="251" y="151" font-family="Arial, sans-serif" font-size="3" font-weight="400" text-anchor="end" fill="#17212b">GPIO15 / RX</text>
+<line x1="280" y1="150" x2="280" y2="153" stroke="#17212b" stroke-width="0.32" />
+<rect x="278.5" y="153" width="3" height="7" fill="none" stroke="#17212b" stroke-width="0.3" />
+<line x1="280" y1="160" x2="280" y2="163" stroke="#17212b" stroke-width="0.32" />
+<text x="283" y="155" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">R2</text>
+<text x="283" y="159" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">20 кОм</text>
+<line x1="280" y1="163" x2="280" y2="166" stroke="#17212b" stroke-width="0.32" />
+<line x1="280" y1="166" x2="280" y2="168" stroke="#17212b" stroke-width="0.32" />
+<line x1="277" y1="168" x2="283" y2="168" stroke="#17212b" stroke-width="0.32" />
+<line x1="278" y1="169.3" x2="282" y2="169.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="279" y1="170.6" x2="281" y2="170.6" stroke="#17212b" stroke-width="0.32" />
+<line x1="255" y1="180" x2="365" y2="180" stroke="#17212b" stroke-width="0.32" />
+<text x="341" y="176" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">RX (Wi-Fi)</text>
+<text x="258" y="177" font-family="Arial, sans-serif" font-size="2.4" font-weight="400" text-anchor="start" fill="#17212b">9</text>
+<text x="251" y="181" font-family="Arial, sans-serif" font-size="3" font-weight="400" text-anchor="end" fill="#17212b">GPIO16 / TX</text>
+<text x="16" y="190" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">GND (HAIER)</text>
+<line x1="16" y1="193" x2="44" y2="193" stroke="#17212b" stroke-width="0.32" />
+<line x1="44" y1="193" x2="44" y2="195" stroke="#17212b" stroke-width="0.32" />
+<line x1="41" y1="195" x2="47" y2="195" stroke="#17212b" stroke-width="0.32" />
+<line x1="42" y1="196.3" x2="46" y2="196.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="43" y1="197.6" x2="45" y2="197.6" stroke="#17212b" stroke-width="0.32" />
+<text x="325" y="156.2" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">+5V</text>
+<line x1="325" y1="158" x2="362" y2="158" stroke="#17212b" stroke-width="0.32" />
+<text x="364" y="159" font-family="Arial, sans-serif" font-size="2.4" font-weight="700" text-anchor="start" fill="#17212b">+5V (Wi-Fi)</text>
+<line x1="335" y1="167" x2="362" y2="167" stroke="#17212b" stroke-width="0.32" />
+<line x1="335" y1="167" x2="335" y2="169" stroke="#17212b" stroke-width="0.32" />
+<line x1="332" y1="169" x2="338" y2="169" stroke="#17212b" stroke-width="0.32" />
+<line x1="333" y1="170.3" x2="337" y2="170.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="334" y1="171.6" x2="336" y2="171.6" stroke="#17212b" stroke-width="0.32" />
+<text x="364" y="168" font-family="Arial, sans-serif" font-size="2.4" font-weight="700" text-anchor="start" fill="#17212b">GND (Wi-Fi)</text>
+<text x="169" y="194" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="start" fill="#17212b">GPIO8 / RX</text>
+<text x="162" y="193" font-family="Arial, sans-serif" font-size="2.3" font-weight="400" text-anchor="end" fill="#17212b">12</text>
+<line x1="165" y1="194" x2="145" y2="194" stroke="#17212b" stroke-width="0.32" />
+<text x="143" y="195" font-family="Arial, sans-serif" font-size="2.7" font-weight="700" text-anchor="end" fill="#17212b">MB_RX</text>
+<text x="251" y="194" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="end" fill="#17212b">GPIO9 / TX</text>
+<text x="258" y="193" font-family="Arial, sans-serif" font-size="2.3" font-weight="400" text-anchor="start" fill="#17212b">17</text>
+<line x1="255" y1="194" x2="272" y2="194" stroke="#17212b" stroke-width="0.32" />
+<text x="274" y="195" font-family="Arial, sans-serif" font-size="2.7" font-weight="700" text-anchor="start" fill="#17212b">MB_TX</text>
+<text x="210" y="204" font-family="Arial, sans-serif" font-size="2.7" font-weight="400" text-anchor="middle" fill="#17212b">GPIO21 / DE  ·  контакт 23</text>
+<line x1="210" y1="211" x2="210" y2="218" stroke="#17212b" stroke-width="0.32" />
+<text x="210" y="223" font-family="Arial, sans-serif" font-size="2.7" font-weight="700" text-anchor="middle" fill="#17212b">MB_DE</text>
+<line x1="178" y1="211" x2="178" y2="224" stroke="#17212b" stroke-width="0.32" />
+<text x="163" y="232" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">GND: 1, 40, EP41</text>
+<line x1="178" y1="224" x2="178" y2="226" stroke="#17212b" stroke-width="0.32" />
+<line x1="175" y1="226" x2="181" y2="226" stroke="#17212b" stroke-width="0.32" />
+<line x1="176" y1="227.3" x2="180" y2="227.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="177" y1="228.6" x2="179" y2="228.6" stroke="#17212b" stroke-width="0.32" />
+<text x="286" y="201" font-family="Arial, sans-serif" font-size="3.1" font-weight="700" text-anchor="start" fill="#17212b">MODBUS RTU / RS485</text>
+<rect x="300" y="221" width="37" height="39" fill="none" stroke="#17212b" stroke-width="0.3" />
+<text x="303" y="211" font-family="Arial, sans-serif" font-size="3" font-weight="700" text-anchor="start" fill="#17212b">U3 / MAX485</text>
+<text x="303" y="228" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">1 RO</text>
+<line x1="300" y1="227" x2="285" y2="227" stroke="#17212b" stroke-width="0.32" />
+<line x1="271" y1="227" x2="274" y2="227" stroke="#17212b" stroke-width="0.32" />
+<rect x="274" y="225.5" width="8" height="3" fill="none" stroke="#17212b" stroke-width="0.3" />
+<line x1="282" y1="227" x2="285" y2="227" stroke="#17212b" stroke-width="0.32" />
+<text x="278" y="222" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="middle" fill="#17212b">R7</text>
+<text x="278" y="233" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="middle" fill="#17212b">10 кОм</text>
+<line x1="271" y1="227" x2="246" y2="227" stroke="#17212b" stroke-width="0.32" />
+<circle cx="254" cy="227" r=".65" fill="#17212b" />
+<text x="243" y="228" font-family="Arial, sans-serif" font-size="2.7" font-weight="700" text-anchor="end" fill="#17212b">MB_RX</text>
+<line x1="254" y1="227" x2="254" y2="230" stroke="#17212b" stroke-width="0.32" />
+<rect x="252.5" y="230" width="3" height="7" fill="none" stroke="#17212b" stroke-width="0.3" />
+<line x1="254" y1="237" x2="254" y2="240" stroke="#17212b" stroke-width="0.32" />
+<text x="251" y="232" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="end" fill="#17212b">R6</text>
+<text x="251" y="236" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="end" fill="#17212b">20 кОм</text>
+<line x1="254" y1="240" x2="254" y2="244" stroke="#17212b" stroke-width="0.32" />
+<line x1="254" y1="244" x2="254" y2="246" stroke="#17212b" stroke-width="0.32" />
+<line x1="251" y1="246" x2="257" y2="246" stroke="#17212b" stroke-width="0.32" />
+<line x1="252" y1="247.3" x2="256" y2="247.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="253" y1="248.6" x2="255" y2="248.6" stroke="#17212b" stroke-width="0.32" />
+<text x="303" y="237" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">2 /RE</text>
+<text x="303" y="243" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">3 DE</text>
+<line x1="300" y1="236" x2="290" y2="236" stroke="#17212b" stroke-width="0.32" />
+<line x1="300" y1="242" x2="290" y2="242" stroke="#17212b" stroke-width="0.32" />
+<line x1="290" y1="236" x2="290" y2="242" stroke="#17212b" stroke-width="0.32" />
+<circle cx="290" cy="236" r=".65" fill="#17212b" />
+<line x1="275" y1="236" x2="290" y2="236" stroke="#17212b" stroke-width="0.32" />
+<text x="273" y="237" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="end" fill="#17212b">MB_DE</text>
+<line x1="283" y1="236" x2="283" y2="239" stroke="#17212b" stroke-width="0.32" />
+<rect x="281.5" y="239" width="3" height="7" fill="none" stroke="#17212b" stroke-width="0.3" />
+<line x1="283" y1="246" x2="283" y2="249" stroke="#17212b" stroke-width="0.32" />
+<text x="286" y="241" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">R8</text>
+<text x="286" y="245" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">10 кОм</text>
+<line x1="283" y1="236" x2="290" y2="236" stroke="#17212b" stroke-width="0.32" />
+<circle cx="283" cy="236" r=".65" fill="#17212b" />
+<line x1="283" y1="249" x2="283" y2="251" stroke="#17212b" stroke-width="0.32" />
+<line x1="280" y1="251" x2="286" y2="251" stroke="#17212b" stroke-width="0.32" />
+<line x1="281" y1="252.3" x2="285" y2="252.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="282" y1="253.6" x2="284" y2="253.6" stroke="#17212b" stroke-width="0.32" />
+<text x="303" y="253" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">4 DI</text>
+<line x1="300" y1="252" x2="294" y2="252" stroke="#17212b" stroke-width="0.32" />
+<line x1="294" y1="252" x2="294" y2="265" stroke="#17212b" stroke-width="0.32" />
+<line x1="294" y1="265" x2="268" y2="265" stroke="#17212b" stroke-width="0.32" />
+<text x="266" y="266" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="end" fill="#17212b">MB_TX</text>
+<line x1="321" y1="221" x2="321" y2="215" stroke="#17212b" stroke-width="0.32" />
+<text x="333" y="219" font-family="Arial, sans-serif" font-size="2.3" font-weight="400" text-anchor="start" fill="#17212b">8 VCC</text>
+<line x1="321" y1="215" x2="365" y2="215" stroke="#17212b" stroke-width="0.32" />
+<line x1="365" y1="215" x2="365" y2="190" stroke="#17212b" stroke-width="0.32" />
+<line x1="365" y1="190" x2="380" y2="190" stroke="#17212b" stroke-width="0.32" />
+<text x="369" y="188.2" font-family="Arial, sans-serif" font-size="2.6" font-weight="700" text-anchor="start" fill="#17212b">+5V</text>
+<line x1="380" y1="190" x2="380" y2="195" stroke="#17212b" stroke-width="0.32" />
+<line x1="377" y1="195" x2="383" y2="195" stroke="#17212b" stroke-width="0.32" />
+<line x1="377" y1="197" x2="383" y2="197" stroke="#17212b" stroke-width="0.32" />
+<line x1="380" y1="197" x2="380" y2="203" stroke="#17212b" stroke-width="0.32" />
+<text x="384" y="194" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">C4</text>
+<text x="384" y="199" font-family="Arial, sans-serif" font-size="2.5" font-weight="400" text-anchor="start" fill="#17212b">0,1 мкФ</text>
+<line x1="380" y1="203" x2="380" y2="205" stroke="#17212b" stroke-width="0.32" />
+<line x1="377" y1="205" x2="383" y2="205" stroke="#17212b" stroke-width="0.32" />
+<line x1="378" y1="206.3" x2="382" y2="206.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="379" y1="207.6" x2="381" y2="207.6" stroke="#17212b" stroke-width="0.32" />
+<text x="333" y="233" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="end" fill="#17212b">7 B</text>
+<line x1="337" y1="232" x2="346" y2="232" stroke="#17212b" stroke-width="0.32" />
+<line x1="346" y1="232" x2="346" y2="219" stroke="#17212b" stroke-width="0.32" />
+<line x1="346" y1="219" x2="392" y2="219" stroke="#17212b" stroke-width="0.32" />
+<text x="396" y="220" font-family="Arial, sans-serif" font-size="3.2" font-weight="700" text-anchor="start" fill="#17212b">B</text>
+<text x="333" y="251" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="end" fill="#17212b">6 A</text>
+<line x1="337" y1="250" x2="392" y2="250" stroke="#17212b" stroke-width="0.32" />
+<text x="396" y="251" font-family="Arial, sans-serif" font-size="3.2" font-weight="700" text-anchor="start" fill="#17212b">A</text>
+<line x1="318" y1="260" x2="318" y2="264" stroke="#17212b" stroke-width="0.32" />
+<text x="321" y="264" font-family="Arial, sans-serif" font-size="2.4" font-weight="400" text-anchor="start" fill="#17212b">5 GND</text>
+<line x1="318" y1="264" x2="318" y2="266" stroke="#17212b" stroke-width="0.32" />
+<line x1="315" y1="266" x2="321" y2="266" stroke="#17212b" stroke-width="0.32" />
+<line x1="316" y1="267.3" x2="320" y2="267.3" stroke="#17212b" stroke-width="0.32" />
+<line x1="317" y1="268.6" x2="319" y2="268.6" stroke="#17212b" stroke-width="0.32" />
+<text x="16" y="206" font-family="Arial, sans-serif" font-size="3" font-weight="700" text-anchor="start" fill="#17212b">СОХРАНИТЬ ШТАТНЫЕ СОЕДИНЕНИЯ</text>
+<text x="16" y="213" font-family="Arial, sans-serif" font-size="2.8" font-weight="400" text-anchor="start" fill="#17212b">TX/RX Haier подключены через ESP; питание общее.</text>
+<text x="16" y="219" font-family="Arial, sans-serif" font-size="2.8" font-weight="400" text-anchor="start" fill="#17212b">Штатный Wi-Fi остаётся подключённым к +5V и GND.</text>
+<text x="16" y="225" font-family="Arial, sans-serif" font-size="2.8" font-weight="400" text-anchor="start" fill="#17212b">Контакты разъёмов сверять по своей плате Haier.</text>
+<text x="16" y="241" font-family="Arial, sans-serif" font-size="2.8" font-weight="400" text-anchor="start" fill="#17212b">RX-делители: 10 кОм последовательно + 20 кОм на GND.</text>
+<text x="16" y="247" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">Все символы GND и одноимённые метки электрически соединены.</text>
+<text x="16" y="253" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#17212b">GND EP41: тепловые via. TAB U2: полигон +3V3.</text>
+<text x="16" y="259" font-family="Arial, sans-serif" font-size="2.6" font-weight="400" text-anchor="start" fill="#a25a00">R и керамика: 0805. C1/C3/C4/C6: 0,1 мкФ / 50 В.</text>
+<text x="107" y="45" font-family="Arial, sans-serif" font-size="2.5" fill="#17212b">+5V</text><line x1="110" y1="47" x2="110" y2="52" stroke="#17212b" stroke-width="0.32" /><line x1="107" y1="52" x2="113" y2="52" stroke="#17212b" stroke-width="0.32" /><line x1="107" y1="54" x2="113" y2="54" stroke="#17212b" stroke-width="0.32" /><line x1="110" y1="54" x2="110" y2="58" stroke="#17212b" stroke-width="0.32" /><line x1="110" y1="58" x2="110" y2="60" stroke="#17212b" stroke-width="0.32" /><line x1="107" y1="60" x2="113" y2="60" stroke="#17212b" stroke-width="0.32" /><line x1="108" y1="61.3" x2="112" y2="61.3" stroke="#17212b" stroke-width="0.32" /><line x1="109" y1="62.6" x2="111" y2="62.6" stroke="#17212b" stroke-width="0.32" /><text x="114" y="51" font-family="Arial, sans-serif" font-size="2.5" fill="#17212b">C5</text><text x="114" y="56" font-family="Arial, sans-serif" font-size="2.5" fill="#17212b">220 мкФ / 10 В</text><text x="105" y="51" font-family="Arial, sans-serif" font-size="2.5" fill="#17212b">+</text><text x="192" y="49" font-family="Arial, sans-serif" font-size="2.5" fill="#17212b">+3V3</text><line x1="195" y1="51" x2="195" y2="56" stroke="#17212b" stroke-width="0.32" /><line x1="192" y1="56" x2="198" y2="56" stroke="#17212b" stroke-width="0.32" /><line x1="192" y1="58" x2="198" y2="58" stroke="#17212b" stroke-width="0.32" /><line x1="195" y1="58" x2="195" y2="62" stroke="#17212b" stroke-width="0.32" /><line x1="195" y1="62" x2="195" y2="64" stroke="#17212b" stroke-width="0.32" /><line x1="192" y1="64" x2="198" y2="64" stroke="#17212b" stroke-width="0.32" /><line x1="193" y1="65.3" x2="197" y2="65.3" stroke="#17212b" stroke-width="0.32" /><line x1="194" y1="66.6" x2="196" y2="66.6" stroke="#17212b" stroke-width="0.32" /><text x="199" y="55" font-family="Arial, sans-serif" font-size="2.5" fill="#17212b">C6</text><text x="199" y="60" font-family="Arial, sans-serif" font-size="2.5" fill="#17212b">0,1 мкФ</text><line x1="387" y1="219" x2="387" y2="228" stroke="#17212b" stroke-width="0.32" /><circle cx="387" cy="219" r="0.65" fill="#17212b" /><rect x="385.5" y="228" width="3" height="7" fill="white" stroke="#17212b" stroke-width="0.3" /><text x="390" y="230" font-family="Arial, sans-serif" font-size="2.1" fill="#17212b">R9</text><text x="390" y="234" font-family="Arial, sans-serif" font-size="2.1" fill="#17212b">120 Ω</text><line x1="387" y1="235" x2="387" y2="239" stroke="#17212b" stroke-width="0.32" /><circle cx="387" cy="239" r="0.7" fill="white" stroke="#17212b" stroke-width="0.3" /><circle cx="387" cy="244" r="0.7" fill="white" stroke="#17212b" stroke-width="0.3" /><text x="390" y="242" font-family="Arial, sans-serif" font-size="2.1" fill="#17212b">JP1</text><line x1="387" y1="244" x2="387" y2="250" stroke="#17212b" stroke-width="0.32" /><circle cx="387" cy="250" r="0.65" fill="#17212b" /><text x="344" y="258" font-family="Arial, sans-serif" font-size="1.9" fill="#17212b">JP1: замкнуть только на конце линии.</text></svg>

@@ -15,3 +15,7 @@ subprocess.run([str(sensor_binary)],check=True,cwd=root)
 management_binary=out/('test_management.exe' if os.name=='nt' else 'test_management')
 subprocess.run(command+['-std=c++17','-Wall','-Wextra','-I',str(root),str(root/'tests/test_management.cpp'),'-o',str(management_binary)],check=True,cwd=root)
 subprocess.run([str(management_binary)],check=True,cwd=root)
+
+inline_binary=out/('test_inline_bridge.exe' if os.name=='nt' else 'test_inline_bridge')
+subprocess.run(command+['-std=c++17','-Wall','-Wextra','-I',str(root),str(root/'tests/test_inline_bridge.cpp'),'-o',str(inline_binary)],check=True,cwd=root)
+subprocess.run([str(inline_binary)],check=True,cwd=root)

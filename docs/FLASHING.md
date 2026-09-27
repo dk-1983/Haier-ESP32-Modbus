@@ -2,18 +2,21 @@
 
 # Install the firmware, step by step
 
-## Install the ready-made v1.1.0 binary (Windows)
+> **Migration from v1.1.0:** v1.2.0 uses update profile `haier-s3-n16r8-v2`; old v1 firmware rejects that signed profile instead of installing a different pinout automatically. Before a manual OTA upgrade, remove/rework old MAX485 connections on GPIO15/16: GPIO16 becomes an output to factory Wi-Fi. Main Haier TX17/RX18 stay unchanged; RS-485 moves to RX8/TX9, DE21 unchanged. See [bridge wiring](UART_BRIDGE.md). After migration, signed automatic updates use the new profile.
+
+
+## Install the ready-made v1.2.0 binary (Windows)
 
 No compiler, Git or ESPHome installation is needed for this path. Use **ESP32-S3-WROOM-1 N16R8 only**, with 16 MB Flash and 8 MB octal PSRAM.
 
-1. Open [release v1.1.0](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.1.0) → **Assets**. For first installation download **`haier-s3-n16r8-v1.1.0-factory.bin`** and `SHA256SUMS.txt`. `Source code` is optional. The **`-ota.bin`** file is only for network updates of an already installed controller.
-2. Install Python 3.11 with its launcher. Open PowerShell in the download folder and run `py -3.11 -m pip install "esptool>=5,<6"`. Check the download with `Get-FileHash .\haier-s3-n16r8-v1.1.0-factory.bin -Algorithm SHA256`; compare the hash with that filename's entry in `SHA256SUMS.txt`.
+1. Open [release v1.2.0](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.2.0) → **Assets**. For first installation download **`haier-s3-n16r8-v1.2.0-factory.bin`** and `SHA256SUMS.txt`. `Source code` is optional. The **`-ota.bin`** file is only for network updates of an already installed controller.
+2. Install Python 3.11 with its launcher. Open PowerShell in the download folder and run `py -3.11 -m pip install "esptool>=5,<6"`. Check the download with `Get-FileHash .\haier-s3-n16r8-v1.2.0-factory.bin -Algorithm SHA256`; compare the hash with that filename's entry in `SHA256SUMS.txt`.
 3. Disconnect the controller from the air conditioner and wire on the bench with power off: **adapter TX (3.3 V logic) → GPIO44, adapter RX ← GPIO43, GND ↔ GND**. Supply the board correctly; a bare module takes regulated **3.3 V**, never 5 V. GPIO17/18 are for Haier, not flashing. See [schematic](SCHEMATIC.md).
 4. Find the adapter COM port in Device Manager and close serial monitors. Remove board power → hold **PGM/BOOT** (GPIO0 to GND) → apply power → release PGM. On a development board, hold BOOT while pressing/releasing RESET.
 5. Replace **COM6** with your port and write the merged image at **0x0**:
 
 ```powershell
-py -3.11 -m esptool --chip esp32s3 --port COM6 --baud 460800 --before no-reset --after no-reset write-flash 0x0 haier-s3-n16r8-v1.1.0-factory.bin
+py -3.11 -m esptool --chip esp32s3 --port COM6 --baud 460800 --before no-reset --after no-reset write-flash 0x0 haier-s3-n16r8-v1.2.0-factory.bin
 ```
 
 6. Wait for successful writing and hash verification. If high-speed writing fails, retry at `--baud 115200`. **Restart power without holding PGM**: the command leaves the module in download mode. Full flash erasure is not required and would delete saved settings.
@@ -24,24 +27,24 @@ Passwords are saved in NVS and survive public OTA and Wi-Fi reset. Use `/setting
 
 ### Updating an installed controller with the release OTA file
 
-Download `haier-s3-n16r8-v1.1.0-ota.bin`. Use Arduino's [espota.py from Arduino-ESP32 3.3.9](https://raw.githubusercontent.com/espressif/arduino-esp32/3.3.9/tools/espota.py) (save it as `espota.py` in the same folder), or the copy installed by a previous source build:
+Download `haier-s3-n16r8-v1.2.0-ota.bin`. Use Arduino's [espota.py from Arduino-ESP32 3.3.9](https://raw.githubusercontent.com/espressif/arduino-esp32/3.3.9/tools/espota.py) (save it as `espota.py` in the same folder), or the copy installed by a previous source build:
 
 ```powershell
-py -3.11 espota.py -i DEVICE_IP -p 8266 -a "CURRENT_OTA_PASSWORD" -f haier-s3-n16r8-v1.1.0-ota.bin
+py -3.11 espota.py -i DEVICE_IP -p 8266 -a "CURRENT_OTA_PASSWORD" -f haier-s3-n16r8-v1.2.0-ota.bin
 ```
 
 Use the password currently on the device for uploading. The saved personal passwords remain unchanged after restart. Allow the uploader through the local firewall. Never upload the factory file through OTA. This is **ArduinoOTA**, not ESPHome native OTA or browser upload.
 
 ## Alternative: build with personal passwords
 
-The following steps are for a custom build. v1.0.0 remains source-only; v1.1.0 offers both source and ready-made binaries.
+The following steps are for a custom build. v1.0.0 remains source-only; v1.2.0 offers both source and ready-made binaries.
 
 ## 1. Download the release and prepare Windows
 
 Use an **ESP32-S3-WROOM-1 N16R8** (16 MB Flash, 8 MB octal PSRAM) and a USB-UART adapter with **3.3 V logic**. This firmware is not for ESP8266 or the original Haier Wi-Fi module.
 
 1. Install **Python 3.11** with the Python launcher and **Git**; reopen PowerShell after installation.
-2. Open [release v1.1.0](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.1.0), expand **Assets**, download **Source code (zip)** and extract it.
+2. Open [release v1.2.0](https://github.com/dk-1983/Haier-ESP32-Modbus/releases/tag/v1.2.0), expand **Assets**, download **Source code (zip)** and extract it.
 3. Open PowerShell in the extracted folder containing `haier-s3.yaml` and `Build.ps1`. Check `py -3.11 --version` and `git --version`.
 
 ## 2. Set your passwords
