@@ -1,4 +1,4 @@
 {
-  "payload": "{\"channel\":\"stable\",\"profile\":\"haier-s3-n16r8-v2\",\"schema\":1,\"sha256\":\"0fa497d86cf40078e9f4700b8a58bf24358dfff21cbe33e0a768059af189d45c\",\"size\":1180912,\"url\":\"https://github.com/dk-1983/Haier-ESP32-Modbus/releases/download/v1.3.0/haier-s3-n16r8-v1.3.0-ota.bin\",\"version\":\"1.3.0\"}",
-  "signature": "304402204b049b70447a545876d36902b327ebb58ab4b6ef3245fe9fad30a397a69d9e1e0220010390bdfba0342245dfab3d68e6d411c418200286b7e00c5dea7b74a5c1029d"
+  "payload": "{\"channel\":\"stable\",\"profile\":\"haier-s3-n16r8-v2\",\"schema\":1,\"sha256\":\"72fda4a3c4d069163c553242c3b8d387d59c8435f415b37540de674f025378ec\",\"size\":1187888,\"url\":\"https://github.com/dk-1983/Haier-ESP32-Modbus/releases/download/v1.3.1/haier-s3-n16r8-v1.3.1-ota.bin\",\"version\":\"1.3.1\"}",
+  "signature": "3046022100c629039a74889829474921add320e3069defdf91e76551ef99e5576f476da41a022100927e35f82a1ad0bfa6fe4d0246e0ce246ec7c5f628eaca0fd66de9e97f1cf24d"
 }
