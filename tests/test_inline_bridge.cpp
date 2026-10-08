@@ -191,6 +191,25 @@ int main() {
     feed(b, false, status(), 8200);
     assert(s.factory == status());
   }
+  { // A later line error must not turn a completed local poll into a stale-reply filter.
+    for (bool timeout : {false, true}) {
+      Sink s; haier_inline::Bridge b(s); init(b);
+      assert(b.send(poll.data(), poll.size(), 5000));
+      if (!timeout) feed(b, false, status(), 5100);
+      b.local_finished(5200);
+      b.tick(7300);  // Any late local reply quarantine has expired.
+      feed(b, true, poll, 7400);
+      s.factory.clear();
+      feed(b, false, Bytes{0x42}, 7450); // Noise before a valid factory response.
+      feed(b, false, status(), 7500);
+      Bytes expected{0x42}; auto reply=status();
+      expected.insert(expected.end(), reply.begin(), reply.end());
+      assert(s.factory == expected);
+      b.tick(9500);
+      assert(b.ready(9600));
+      assert(b.pending_timeouts[1] == 0);
+    }
+  }
   { // A main-board notification is acknowledged by factory, not stolen as own reply.
     Sink s; haier_inline::Bridge b(s); init(b); s.factory.clear();
     assert(b.send(poll.data(), poll.size(), 5000));

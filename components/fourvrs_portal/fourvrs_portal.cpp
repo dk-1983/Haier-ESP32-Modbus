@@ -109,6 +109,8 @@ String Portal::climate_status_(bool raw) {
     out += ",\"uart_bridge\":{\"factory_detected\":" + String(bridge->factory_present() ? "true" : "false");
     out += ",\"local_busy\":" + String(bridge->busy() ? "true" : "false");
     out += ",\"passthrough_only\":" + String(bridge->passthrough_only() ? "true" : "false");
+    out += ",\"wait_reason\":" + json_string_(bridge->wait_reason(millis()));
+    out += ",\"passthrough_reason\":" + json_string_(bridge->passthrough_reason());
     out += ",\"main_frames\":" + String(c.main_frames) + ",\"factory_frames\":" + String(c.factory_frames);
     out += ",\"local_requests\":" + String(c.local_requests) + ",\"local_replies\":" + String(c.local_replies);
     out += ",\"invalid\":" + String(c.invalid) + ",\"partial_timeouts\":" + String(c.partial_timeouts);
@@ -149,11 +151,11 @@ String Portal::health_() {
       ",\"flash_size\":" + String(ESP.getFlashChipSize()) +
       ",\"wifi_outages\":" + String(wifi_outages_) + ",\"reconnect_attempts\":" + String(reconnect_attempts_) +
       ",\"disconnect_reason\":" + String(disconnect_reason_) +
-      ",\"uptime_s\":" + String(millis() / 1000) + ",\"sketch_md5\":" + json_string_(ESP.getSketchMD5()) + "}";
+      ",\"recovery_state\":" + json_string_(recovery_state_) + ",\"uptime_s\":" + String(millis() / 1000) + ",\"sketch_md5\":" + json_string_(ESP.getSketchMD5()) + "}";
 }
 bool Portal::test_auth_() {
   if(!credentials_ready_||!credentials_.configured){web_.send(403,"text/plain","Set personal passwords through setup Wi-Fi first");return false;}
-  if(web_.method()==HTTP_POST && web_.uri()!="/updates/config" && (updates_busy_()||credentials_restart_)){web_.send(409,"text/plain","Maintenance in progress");return false;}
+  if(web_.method()==HTTP_POST && web_.uri()!="/updates/config" && (updates_busy_()||restart_pending_)){web_.send(409,"text/plain","Maintenance in progress");return false;}
   if (web_.authenticate("admin", credentials_.web)) return true;
   web_.requestAuthentication(); return false;
 }
@@ -187,6 +189,22 @@ void Portal::configure_web_() {
     if (radio_ap_() && web_.client().localIP() == WiFi.softAPIP()) { show_setup_(); return; }
     if(test_auth_())send_page_(WIFIINFOPAGE);
   });
+  web_.on("/diagnostics/recovery", HTTP_GET, [this]() {
+    if (!test_auth_()) return;
+    web_.sendHeader("Cache-Control", "no-store");
+    web_.send(200,"application/json",recovery_report_());
+  });
+  web_.on("/system/restart", HTTP_POST, [this]() {
+    if (!test_auth_()) return;
+    if (web_.arg("token") != token_) { web_.send(403,"text/plain","Invalid token"); return; }
+    if (web_.arg("confirm") != "restart") { web_.send(400,"text/plain","Explicit confirmation required"); return; }
+    if (test_pending_ || pending_ || scanning_ || wifi_reset_pending_) {
+      web_.send(409,"text/plain","Operation pending; retry when it finishes"); return;
+    }
+    restart_pending_ = true; restart_at_ = millis();
+    web_.sendHeader("Cache-Control", "no-store");
+    web_.send(202,"application/json","{\"accepted\":true,\"restart\":\"controller\"}");
+  });
   web_.on("/about", HTTP_GET, [this]() { if(test_auth_())send_page_(ABOUTPAGE); });
   web_.on("/network", HTTP_GET, [this]() {
     if (!portal_request_()) return;
@@ -198,7 +216,7 @@ void Portal::configure_web_() {
   web_.on("/scan", HTTP_POST, [this]() {
     if (!portal_request_()) return;
     if (web_.arg("token") != token_) { web_.send(403, "text/plain", "Reload setup page."); return; }
-    if (pending_||updates_busy_()||credentials_restart_) { web_.send(409, "text/plain", "Connection pending."); return; }
+    if (pending_||updates_busy_()||restart_pending_) { web_.send(409, "text/plain", "Connection pending."); return; }
     if (!scanning_) {
       WiFi.scanDelete(); scanning_ = true;
       if (WiFi.scanNetworks(true, false) == WIFI_SCAN_FAILED) {
@@ -215,7 +233,7 @@ void Portal::configure_web_() {
   web_.on("/wifi", HTTP_POST, [this]() {
     if (!portal_request_()) return;
     if (web_.arg("token") != token_) { web_.send(403, "text/plain", "Reload setup page."); return; }
-    if (pending_ || scanning_ || wifi_reset_pending_ || updates_busy_() || credentials_restart_) { web_.send(409, "text/plain", "Wait for scan/connection."); return; }
+    if (pending_ || scanning_ || wifi_reset_pending_ || updates_busy_() || restart_pending_) { web_.send(409, "text/plain", "Wait for scan/connection."); return; }
     if(!credentials_.configured){web_.send(403,"text/plain","Set personal passwords first");return;}
     String s = web_.arg("ssid"), p = web_.arg("password");
     if (s.length() == 0 || s.length() > 32 || p.length() > 63 || (p.length() && p.length() < 8) ||
@@ -262,15 +280,17 @@ void Portal::setup() {
   WiFi.setAutoReconnect(false); WiFi.setSleep(false);
   WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info) { if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) disconnect_reason_ = info.wifi_sta_disconnected.reason; });
   if (!credentials_.configured||!active_.ssid[0]) start_portal_(); else WiFi.begin(active_.ssid, active_.password);
-  if(credentials_.configured){modbus_setup_(); mqtt_setup_(); configure_ota_();updates_setup_();} configure_web_(); outage_since_ = last_attempt_ = millis();
+  if(credentials_.configured){modbus_setup_(); mqtt_setup_(); configure_ota_();updates_setup_();} recovery_setup_(); configure_web_(); outage_since_ = last_attempt_ = millis();
   ESP_LOGI(TAG, "4VRS portal adapted for ESP32-S3; %s; setup complete", hostname_.c_str());
 }
 void Portal::loop() {
   web_.handleClient();finish_scan_();
-  if(credentials_restart_){if(uint32_t(millis()-credentials_restart_at_)>=1000)ESP.restart();return;}
+  if(restart_pending_){if(uint32_t(millis()-restart_at_)>=restart_delay_)ESP.restart();return;}
   if(!credentials_.configured)return;
   mqtt_loop_();modbus_loop_();
   updates_loop_();
+  recovery_loop_();
+  if(restart_pending_)return;
   // HTTP handlers can start timers; sample time AFTER handling the request.
   uint32_t now = millis();
   if(wifi_reset_pending_){wifi_reset_apply_();return;}

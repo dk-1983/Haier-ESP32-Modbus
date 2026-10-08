@@ -32,7 +32,7 @@ async def to_code(config):
     cg.add_library("WebServer", None)
     cg.add_library("ESPmDNS", None)
     cg.add_library("ArduinoOTA", None)
-    cg.add_library("Network", None)
+    cg.add_library("Networking", None)
     cg.add_library("FS", None)
     cg.add_library("Update", None)
     cg.add_library("Preferences", None)

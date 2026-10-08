@@ -8,6 +8,8 @@
 #include <WebServer.h>
 #include <ArduinoOTA.h>
 #include <esp_random.h>
+#include <Preferences.h>
+#include "recovery_policy.h"
 #include "SetupPage.h"
 #include "credentials_model.h"
 #include "ModbusPage.h"
@@ -30,7 +32,17 @@ class Portal : public Component, public haier_bridge::Backend {
   void status_received(const char *data, size_t size);
  protected:
   haier_management::Credentials credentials_{};
-  bool public_release_{false},credentials_ready_{false},credentials_restart_{false};uint32_t credentials_restart_at_{0};
+  bool public_release_{false},credentials_ready_{false},restart_pending_{false};uint32_t restart_at_{0}, restart_delay_{1000};
+  ::Preferences recovery_store_;
+  haier_management::RecoveryPolicy recovery_policy_;
+  bool recovery_storage_ok_{false};
+  const char *recovery_state_{"starting"};
+  uint32_t recovery_sample_at_{0}, recovery_retry_at_{0};
+  bool recovery_retry_{false};
+  struct RecoverySample { uint32_t uptime, age, main, factory, invalid, timeouts, overflows; };
+  RecoverySample recovery_samples_[12]{};
+  unsigned recovery_sample_next_{0}, recovery_sample_count_{0};
+  void recovery_setup_(); void recovery_loop_(); String recovery_report_();
   bool credentials_setup_();void credentials_web_();
   void updates_setup_();void updates_web_();void updates_loop_();bool updates_busy_();void updates_ota_();
 

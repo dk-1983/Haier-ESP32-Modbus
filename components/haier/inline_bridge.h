@@ -100,6 +100,19 @@ class Bridge {
   bool factory_present() const { return factory_seen_; }
   bool busy() const { return own_; }
   bool passthrough_only() const { return passthrough_; }
+  const char *passthrough_reason() const { return passthrough_reason_; }
+  const char *wait_reason(uint32_t now) const {
+    if (passthrough_) return passthrough_reason_;
+    if (own_) return "local_reply";
+    if (pending_[0] || pending_[1]) return "factory_transaction";
+    if (held_size_) return "held_factory_bytes";
+    if (rx_[0].wire_size || rx_[1].wire_size) return "partial_frame";
+    if (now - boot_ < 5000) return "startup";
+    if (quarantine_ && now - fault_at_ < 2000) return "error_quarantine";
+    if (factory_seen_ && !status_seen_) return "factory_first_status";
+    if (now - activity_ < 80) return "bus_active";
+    return "ready";
+  }
   bool ready(uint32_t now) const {
     return !own_ && !passthrough_ && !pending_[0] && !pending_[1] && !held_size_ &&
         !rx_[0].wire_size && !rx_[1].wire_size && now - boot_ >= 5000 &&
@@ -114,7 +127,7 @@ class Bridge {
       if (held_size_ == sizeof(held_)) {
         // Never silently discard factory bytes. Fail open and stop local injection.
         ++counters.overflows;
-        passthrough_ = true;
+        passthrough_ = true; passthrough_reason_ = "factory_buffer_overflow";
         sink_.to_main(held_, held_size_);
         held_size_ = 0;
         sink_.to_main(&b, 1);
@@ -173,7 +186,7 @@ class Bridge {
       }
     }
     if (quarantine_ && !own_ && now - fault_at_ >= 2000) {
-      quarantine_ = false;
+      quarantine_ = false; late_reply_ = false;
       release_(now);
     }
     // A silent/disconnected factory module must not prevent direct operation.
@@ -197,7 +210,7 @@ class Bridge {
     if (!factory_seen_ && f.type() == 0x05) { sink_.to_main(data, len); return true; }
     // Only understood local requests may enter a shared bus.
     if (!ready(now) || reply == UNKNOWN || reply == 0) { ++counters.rejected; return false; }
-    own_ = true; answered_ = false; expected_ = reply; own_crc_ = f.crc();
+    own_ = true; answered_ = false; late_reply_ = false; expected_ = reply; own_crc_ = f.crc();
     last_local_type = f.type(); last_local_flags = f.body[1];
     own_sub_ = f.type() == 1 && f.payload_size() >= 2 && f.payload()[0] == 0x4D &&
         f.payload()[1] == 0xFE ? 0x7D : 0x6D;
@@ -210,6 +223,7 @@ class Bridge {
   void local_finished(uint32_t now) {
     if (!own_) return;
     own_ = false;
+    late_reply_ = !answered_ && !passthrough_;
     if (!answered_) { ++counters.transaction_timeouts; ++local_timeouts; fault_(now); }
     if (!quarantine_) release_(now);
   }
@@ -227,6 +241,8 @@ class Bridge {
   uint32_t invalid_at_{0};
   uint8_t pending_[2]{}, expected_{0}, own_sub_{0};
   bool own_{false}, answered_{false}, own_crc_{false}, factory_seen_{false};
+  const char *passthrough_reason_{"none"};
+  bool late_reply_{false};
   bool status_seen_{false}, quarantine_{false}, passthrough_{false};
   static uint8_t response_(uint8_t type) {
     switch (type) {
@@ -273,7 +289,7 @@ class Bridge {
         return;
       }
       // A timed-out own response must not complete a subsequently held factory request.
-      if (quarantine_ && expected_ && matches_(f)) return;
+      if (quarantine_ && late_reply_ && !passthrough_ && matches_(f)) return;
     }
     if (factory) sink_.to_main(f.wire, f.wire_size);
     else {
@@ -292,7 +308,9 @@ class Bridge {
     uint8_t reply = response_(f.type());
     if (reply) { pending_[side] = reply; pending_at_[side] = now; }
     // Firmware upgrades / baud negotiation cannot safely coexist with local polling.
-    if (f.type() >= 0xE1 && f.type() <= 0xEF) passthrough_ = true;
+    if (f.type() >= 0xE1 && f.type() <= 0xEF) {
+      passthrough_ = true; passthrough_reason_ = "factory_upgrade_or_baud_change";
+    }
   }
   void release_(uint32_t now) {
     size_t n = held_size_;

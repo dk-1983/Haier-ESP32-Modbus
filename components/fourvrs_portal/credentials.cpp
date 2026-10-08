@@ -29,7 +29,7 @@ void Portal::credentials_web_() {
   web_.on("/settings/passwords",HTTP_POST,[this,access](){
     if(!access())return;
     if(web_.arg("token")!=token_){web_.send(403,"text/plain","Invalid token");return;}
-    if(updates_busy_()||test_pending_||pending_||scanning_||wifi_reset_pending_||credentials_restart_){web_.send(409,"text/plain","Operation pending");return;}
+    if(updates_busy_()||test_pending_||pending_||scanning_||wifi_reset_pending_||restart_pending_){web_.send(409,"text/plain","Operation pending");return;}
     for(unsigned i=0;i<web_.args();++i){String k=web_.argName(i);if(k!="token"&&k!="web_password"&&k!="ota_password"&&k!="setup_password"){web_.send(400,"text/plain","Unknown field");return;}}
     auto next=credentials_;bool changed=false;
     const char *keys[]={"web_password","ota_password","setup_password"};char *dest[]={next.web,next.ota,next.setup};size_t caps[]={sizeof(next.web),sizeof(next.ota),sizeof(next.setup)};
@@ -41,7 +41,7 @@ void Portal::credentials_web_() {
     next.configured=1;::Preferences p;
     if(!p.begin("haier-keys",false)||p.putBytes("config",&next,sizeof(next))!=sizeof(next)){web_.send(503,"text/plain","Could not save passwords");return;}
     credentials_=next;ota_password_=next.ota;setup_password_=next.setup;
-    credentials_restart_=true;credentials_restart_at_=millis();
+    restart_pending_=true;restart_at_=millis();
     web_.sendHeader("Cache-Control","no-store");web_.send(202,"application/json","{\"saved\":true,\"restart\":true}");
   });
 }

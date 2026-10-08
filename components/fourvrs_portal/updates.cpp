@@ -273,7 +273,7 @@ void Portal::updates_ota_(){
 }
 void Portal::updates_loop_(){
   if(!HaierUpdate::mutex)return;
-  if(HaierUpdate::busy&&!test_pending_&&!pending_&&!scanning_&&!wifi_reset_pending_&&!credentials_restart_)HaierUpdate::canvasReleased=true;
+  if(HaierUpdate::busy&&!test_pending_&&!pending_&&!scanning_&&!wifi_reset_pending_&&!restart_pending_)HaierUpdate::canvasReleased=true;
   HaierUpdate::tick(credentials_ready_&&storage_ok_&&WiFi.status()==WL_CONNECTED,WiFi.status()==WL_CONNECTED);
 }
 void Portal::updates_web_(){

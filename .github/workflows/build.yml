@@ -9,6 +9,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: python3 tools/test_host.py
+      - run: node tests/test_web_restart.cjs
       - run: pip install jinja2
       - run: python3 tests/test_discovery.py
   firmware:
