@@ -66,3 +66,18 @@ for valid in (True,False):
   attrs=json.loads(e.from_string(a[6]['json_attr_tpl']).render(value_json=payload))
   assert attrs['fault_code']==payload['fault_code']
 print('Telemetry discovery, expiry, fault validity and codes: PASS')
+
+# A select can only receive configured options or HA's explicit unknown reset.
+# Keep UNKNOWN_n diagnostic values in raw state; never offer them as commands.
+for entity, field in [(a[3], 'vertical_position'), (a[4], 'horizontal_position')]:
+ template=e.from_string(entity['val_tpl'])
+ for option in entity['ops']:
+  assert template.render(value_json={**samples, field:option})==option
+ for unsupported in ['UNKNOWN_0','UNKNOWN_15','AUTO','AUTO_SPECIAL','MAX_DOWN',None,'',0,{},[]]:
+  assert template.render(value_json={**samples, field:unsupported})=='None'
+ missing={k:v for k,v in samples.items() if k!=field}
+ assert template.render(value_json=missing)=='None'
+ assert template.render(value_json={**samples,field:'UNKNOWN_0'})=='None'
+ assert template.render(value_json={**samples,field:'CENTER'})=='CENTER'
+ assert not any(v.startswith('UNKNOWN_') for v in entity['ops'])
+print('Select unsupported/null/missing state resets and valid-state recovery: PASS')
